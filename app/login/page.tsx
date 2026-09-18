@@ -5,9 +5,10 @@ import { AuthSkeleton } from '@/components/Skeleton';
 
 export const metadata: Metadata = { title: 'Entrar — ReviewFlow AI' };
 
-export default function LoginPage({ searchParams }: { searchParams: { mode?: string } }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ mode?: string }> }) {
   // Compat: /login?mode=signup (antiguo) sigue funcionando como registro.
-  const mode = searchParams.mode === 'signup' ? 'signup' : 'signin';
+  const query = await searchParams;
+  const mode = query.mode === 'signup' ? 'signup' : 'signin';
   return (
     <Suspense fallback={<AuthSkeleton />}>
       <AuthForm mode={mode} />

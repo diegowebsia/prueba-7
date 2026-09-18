@@ -12,17 +12,17 @@ export const metadata = { title: 'Panel — ReviewFlow AI' };
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { tab?: string; addon?: string; pack?: string; plan?: string };
+  searchParams: Promise<{ tab?: string; addon?: string; pack?: string; plan?: string }>;
 }) {
-  const user = await getSessionUser();
+  const [user, query] = await Promise.all([getSessionUser(), searchParams]);
   const tab =
-    searchParams.tab === 'facturacion' || searchParams.tab === 'empresa'
-      ? searchParams.tab
-      : searchParams.addon
+    query.tab === 'facturacion' || query.tab === 'empresa'
+      ? query.tab
+      : query.addon
         ? 'facturacion'
         : 'bandeja';
   const addonResult =
-    searchParams.addon === 'success' ? 'success' : searchParams.addon === 'canceled' ? 'canceled' : null;
+    query.addon === 'success' ? 'success' : query.addon === 'canceled' ? 'canceled' : null;
   if (isSupabaseConfigured && !user) redirect('/login?redirect=/dashboard');
 
   let tenants: TenantInfo[] = [];
@@ -35,7 +35,7 @@ export default async function DashboardPage({
   // panel completo (Bandeja, Empresa y Facturación) pueda previsualizarse con
   // `/dashboard?demo=1`. En cuanto existen claves reales, este bloque no aplica.
   if (!isSupabaseConfigured) {
-    const requestedPlan = searchParams.plan === 'business' ? 'business' : 'pro';
+    const requestedPlan = query.plan === 'business' ? 'business' : 'pro';
     const d = demoTenants.find((tenant) => tenant.plan === requestedPlan && tenant.subscription_status === 'active')
       ?? demoTenants[0];
     reviews = demoReviews.filter((review) => review.tenant === d.name);
