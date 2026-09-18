@@ -1,4 +1,4 @@
-# 🚀 GUIA_DESPLIEGUE.md — ReviewFlow AI v3.12.0
+# 🚀 GUIA_DESPLIEGUE.md — ReviewFlow AI v3.13.0
 
 Despliegue en **producción comercial desde cero**, paso a paso, en el host que elijas.
 Al final tendrás `https://tudominio.com` cobrando con Stripe en modo live.
@@ -44,7 +44,7 @@ Tiempo estimado: **~40 minutos**.
 ## 2. Supabase: base de datos + auth (20 min)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) (región **West EU / Frankfurt** si tus clientes son españoles).
-2. **SQL Editor** → pega el contenido de `supabase/schema.sql` → **Run**. (Si ya tenías datos de una versión anterior, ejecuta en orden `migration_3_4_0.sql` → `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` → `migration_3_9_0.sql` → `migration_3_10_0.sql` → `migration_3_11_0.sql` → **`migration_3_12_0.sql`** — 3.10 añade TripAdvisor/opt-ins/IA async y 3.11 aplica el hardening y 3.12 la observabilidad/idempotencia de webhooks.)
+2. **SQL Editor** → pega el contenido de `supabase/schema.sql` → **Run**. (Si ya tenías datos de una versión anterior, ejecuta en orden `migration_3_4_0.sql` → `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` → `migration_3_9_0.sql` → `migration_3_10_0.sql` → `migration_3_11_0.sql` → `migration_3_12_0.sql` → **`migration_3_13_0.sql`** — 3.10 añade TripAdvisor/opt-ins/IA async y 3.11 aplica el hardening y 3.12 la observabilidad/idempotencia de webhooks.)
 3. **Authentication → Providers → Email**: activado (magic link desactivado, contraseña activada).
 4. **Authentication → URL Configuration** → Site URL = `https://tudominio.com` (+ añade la URL a Redirect URLs).
 5. **Project Settings → API**: copia `URL`, `anon public` y `service_role` → irán al `.env` del paso 6.

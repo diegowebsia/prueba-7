@@ -38,7 +38,7 @@ export async function GET(req: Request) {
   });
 
   const reviewFields = 'id,source,external_id,author_name,rating,text,reply_text,replied_at,is_verified,created_at';
-  const feedbackFields = 'id,stars,kind,channel,customer_name,contact,message,order_id,status,created_at';
+  const feedbackFields = 'id,stars,kind,channel,campaign,customer_name,contact,message,order_id,status,created_at';
   try {
     const rows = await allRows(
       admin,

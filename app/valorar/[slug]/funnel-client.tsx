@@ -6,6 +6,7 @@ import { Star, ExternalLink, CheckCircle2, MessageSquareWarning, Loader2 } from 
 type Props = {
   slug: string;
   businessName: string;
+  campaign: string | null;
   hasGoogle: boolean;
   hasTripadvisor: boolean;
   hasTrustpilot: boolean;
@@ -13,7 +14,7 @@ type Props = {
 
 type Links = { google: string | null; tripadvisor: string | null; trustpilot: string | null };
 
-export default function FunnelClient({ slug, businessName }: Props) {
+export default function FunnelClient({ slug, businessName, campaign }: Props) {
   const [stars, setStars] = useState(0);
   const [hover, setHover] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -32,7 +33,7 @@ export default function FunnelClient({ slug, businessName }: Props) {
     try {
       const res = await fetch('/api/feedback/respond', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, stars: value }),
+        body: JSON.stringify({ slug, stars: value, campaign }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? 'No se pudo registrar tu voto.');
@@ -65,6 +66,7 @@ export default function FunnelClient({ slug, businessName }: Props) {
           orderId: form.orderId.trim() || undefined,
           responseId: responseId || undefined,
           clickToken: clickToken || undefined,
+          campaign,
         }),
       });
       const data = await res.json();

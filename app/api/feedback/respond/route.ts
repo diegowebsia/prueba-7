@@ -9,6 +9,7 @@ import { systemLog } from '@/lib/logger';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { escapeHtml, hashPersonalValue, requestIp, signOpaqueId, verifyOpaqueId } from '@/lib/security';
 import { payloadErrorResponse, readJsonLimited } from '@/lib/request';
+import { normalizeCampaign } from '@/lib/campaign';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,7 @@ const Body = z.object({
   orderId: z.string().max(100).optional(),
   responseId: z.string().uuid().optional(),
   clickToken: z.string().min(20).optional(),
+  campaign: z.string().max(100).optional(),
 });
 
 
@@ -43,6 +45,7 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(rawBody);
   if (!parsed.success) return NextResponse.json({ error: 'Parámetros inválidos.' }, { status: 400 });
   const input = parsed.data;
+  const campaign = normalizeCampaign(input.campaign);
 
   const ip = requestIp(req);
   const rate = await consumeRateLimit('feedback', ip, 10, 60);
@@ -88,7 +91,7 @@ export async function POST(req: Request) {
     contact: isTicket ? input.contact?.trim() || null : null,
     message: isTicket ? message : null,
     order_id: isTicket ? input.orderId?.trim() || null : null,
-    ip_hash: ipHash, user_agent: userAgent,
+    ip_hash: ipHash, user_agent: userAgent, campaign,
   };
   const query = existingId
     ? admin.from('feedback_responses').update(values).eq('id', existingId).eq('tenant_id', tenant.id).eq('kind', 'redirect').gte('created_at', new Date(Date.now() - 60 * 60_000).toISOString()).select('id').single()

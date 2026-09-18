@@ -1,4 +1,4 @@
-# 💰 GUIA_COMERCIALIZACION — Todo lo que TIENES QUE PONER TÚ para vender al público (v3.12.0)
+# 💰 GUIA_COMERCIALIZACION — Todo lo que TIENES QUE PONER TÚ para vender al público (v3.13.0)
 
 El código está 100 % programado: planes de pago con prueba de 7 días, cobros, cuotas,
 panel, integraciones y textos legales base. **Esta guía lista, bloque por bloque, todo lo

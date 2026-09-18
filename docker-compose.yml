@@ -1,5 +1,5 @@
 # ============================================================
-# ReviewFlow AI v3.12.0 — Despliegue con 1 comando en CUALQUIER servidor
+# ReviewFlow AI v3.13.0 — Despliegue con 1 comando en CUALQUIER servidor
 # Uso:
 #   cp .env.example .env    # 1) pega tus claves reales
 #   docker compose up -d --build   # 2) lanzar

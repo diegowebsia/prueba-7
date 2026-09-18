@@ -21,3 +21,11 @@ test('schema 3.12 aporta idempotencia observable de webhooks', () => {
     assert.ok(sql.includes(value));
   }
 });
+
+
+test('schema 3.13 incorpora atribución de campañas', () => {
+  const sql = readFileSync('supabase/schema.sql', 'utf8');
+  assert.match(sql, /campaign text/);
+  assert.ok(sql.includes('feedback_tenant_campaign_created_idx'));
+  assert.ok(sql.includes('feedback_campaign_format'));
+});

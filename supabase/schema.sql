@@ -1,5 +1,5 @@
 -- ============================================================
--- ReviewFlow AI v3.12.0 — Esquema Supabase (Postgres + RLS)
+-- ReviewFlow AI v3.13.0 — Esquema Supabase (Postgres + RLS)
 -- Cómo aplicarlo: Supabase Dashboard → SQL Editor → pegar y Run.
 -- Es idempotente: puedes ejecutarlo varias veces sin romper nada.
 -- v3.8.0: contabilidad de TOKENS de IA (`usage_counters.ai_tokens_*`,
@@ -268,6 +268,7 @@ create table if not exists public.feedback_responses (
   stars int not null check (stars between 1 and 5),
   kind text not null check (kind in ('redirect', 'ticket')),
   channel text check (channel in ('google', 'tripadvisor', 'trustpilot')),
+  campaign text constraint feedback_campaign_format check (campaign is null or campaign ~ '^[a-z0-9][a-z0-9_-]{0,47}$'),
   customer_name text,
   contact text,
   message text,
@@ -282,6 +283,8 @@ create index if not exists feedback_tenant_created_idx
   on public.feedback_responses (tenant_id, created_at desc);
 create index if not exists feedback_tenant_kind_idx
   on public.feedback_responses (tenant_id, kind, status);
+create index if not exists feedback_tenant_campaign_created_idx
+  on public.feedback_responses (tenant_id, campaign, created_at desc);
 
 -- ---------- Tabla: addons (ampliaciones de cuota compradas) ----------
 create table if not exists public.addons (

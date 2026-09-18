@@ -1,4 +1,4 @@
-# ⚙️ GUIA_AUTOMATIZACION — Cron, colas, plantillas WhatsApp, opt-in y Embudo (v3.12.0)
+# ⚙️ GUIA_AUTOMATIZACION — Cron, colas, plantillas WhatsApp, opt-in y Embudo (v3.13.0)
 
 Todo lo automático de ReviewFlow AI: qué hace solo el código y qué debes configurar tú
 (claves, plantillas, checkbox del checkout). Sin estos pasos, la plataforma funciona igual
@@ -117,7 +117,7 @@ sin consentimiento registrado. Añade este checkbox al checkout:
 
 ```bash
 curl -s https://tudominio.com/api/health | python3 -m json.tool
-# version 3.12.0 · tripadvisor/queue/cron en true
+# version 3.13.0 · tripadvisor/queue/cron en true
 
 # Cron manual (sustituye el secreto):
 curl -s -H "Authorization: Bearer TU_CRON_SECRET" \

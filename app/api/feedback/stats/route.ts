@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 
   const { data: rows } = await admin
     .from('feedback_responses')
-    .select('stars, kind, channel, status, created_at')
+    .select('stars, kind, channel, status, campaign, created_at')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
     .limit(2000);
@@ -41,11 +41,19 @@ export async function GET(req: Request) {
   const byChannel: Record<string, number> = { google: 0, tripadvisor: 0, trustpilot: 0, none: 0 };
   let sum = 0;
   let redirects = 0;
+  let clicks = 0;
   let ticketsOpen = 0;
   let ticketsClosed = 0;
+  const campaignMap = new Map<string, { campaign: string; votes: number; clicks: number; tickets: number }>();
   for (const r of list as any[]) {
     byStars[r.stars] = (byStars[r.stars] ?? 0) + 1;
     sum += r.stars;
+    const campaign = r.campaign || 'sin-campana';
+    const campaignStats = campaignMap.get(campaign) ?? { campaign, votes: 0, clicks: 0, tickets: 0 };
+    campaignStats.votes += 1;
+    if (r.channel) { campaignStats.clicks += 1; clicks += 1; }
+    if (r.kind === 'ticket') campaignStats.tickets += 1;
+    campaignMap.set(campaign, campaignStats);
     if (r.kind === 'redirect') {
       redirects += 1;
       byChannel[r.channel ?? 'none'] = (byChannel[r.channel ?? 'none'] ?? 0) + 1;
@@ -63,9 +71,11 @@ export async function GET(req: Request) {
     promoters: (byStars[4] ?? 0) + (byStars[5] ?? 0),
     detractors: (byStars[1] ?? 0) + (byStars[2] ?? 0) + (byStars[3] ?? 0),
     redirects,
+    clicks,
     ticketsOpen,
     ticketsClosed,
     byStars,
     byChannel,
+    campaigns: Array.from(campaignMap.values()).sort((a, b) => b.votes - a.votes).slice(0, 20),
   });
 }

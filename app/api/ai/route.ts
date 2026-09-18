@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * ============================================================
- * Endpoint de IA (v3.12.0)
+ * Endpoint de IA (v3.13.0)
  *
  * Modo asíncrono: `{ ..., "async": true }` (solo `task: 'reply'`) encola el
  * trabajo en QStash y responde 202 `{ queued: true, jobId }`; el resultado se

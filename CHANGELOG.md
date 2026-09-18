@@ -2,6 +2,14 @@
 
 
 
+
+## v3.13.0 (2026-09-18) — QR, campañas y SLA de reputación
+
+- QR SVG descargable por empresa y campaña, generado localmente sin trackers.
+- Atribución neutral de votos, clics y tickets por campaña/punto de origen.
+- Ranking de campañas en dashboard y campaña incluida en exportaciones CSV.
+- Informe de reputación ampliado con tiempo medio y SLA de respuesta en 24 horas.
+- Benchmark de Google, Trustpilot, Podium y recomendaciones OWASP documentado.
 ## v3.12.0 (2026-09-18) — Robustez y nuevos servicios
 
 - Idempotencia observable de todos los eventos Stripe, con estado, intentos y reintento seguro.

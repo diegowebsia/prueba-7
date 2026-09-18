@@ -9,9 +9,11 @@ import {
   Filter,
   Loader2,
   MessageSquareWarning,
+  QrCode,
   Star,
 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import { normalizeCampaign } from '@/lib/campaign';
 import { Spinner } from '@/components/Skeleton';
 import type { TenantInfo } from '@/components/dashboard/types';
 
@@ -28,9 +30,12 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
   const [copied, setCopied] = useState(false);
   const [taUrl, setTaUrl] = useState(t.settings.tripadvisor_url ?? '');
   const [tpUrl, setTpUrl] = useState(t.settings.trustpilot_url ?? '');
+  const [campaign, setCampaign] = useState('mostrador');
   const [enabled, setEnabled] = useState(t.settings.funnel_enabled !== false);
 
   const publicLink = typeof window !== 'undefined' ? `${window.location.origin}/valorar/${t.slug}` : `/valorar/${t.slug}`;
+  const campaignSlug = normalizeCampaign(campaign) ?? '';
+  const attributedLink = campaignSlug ? `${publicLink}?campaign=${encodeURIComponent(campaignSlug)}` : publicLink;
 
   async function load() {
     setLoading(true);
@@ -56,7 +61,7 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(publicLink);
+      await navigator.clipboard.writeText(attributedLink);
       setCopied(true);
       toast({ kind: 'success', title: 'Enlace copiado', body: 'Pégalo en tu QR, ticket o web.' });
       setTimeout(() => setCopied(false), 2000);
@@ -125,16 +130,35 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
 
       {/* Enlace público */}
       <div className="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-3 sm:flex-row sm:items-center">
-        <code className="min-w-0 flex-1 truncate text-sm text-brand-200">{publicLink}</code>
+        <code className="min-w-0 flex-1 truncate text-sm text-brand-200">{attributedLink}</code>
         <div className="flex gap-2">
           <button onClick={copyLink} className="btn-secondary btn-sm">
             {copied ? <CheckCircle2 size={13} /> : <Copy size={13} />} {copied ? '¡Copiado!' : 'Copiar'}
           </button>
-          <a href={publicLink} target="_blank" rel="noopener" className="btn-quiet btn-sm">
+          <a href={attributedLink} target="_blank" rel="noopener" className="btn-quiet btn-sm">
             <ExternalLink size={13} /> Ver
           </a>
         </div>
       </div>
+
+      {!demo && (
+        <div className="grid gap-2 rounded-xl border border-brand-400/20 bg-brand-500/[0.04] p-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div>
+            <label className="label" htmlFor={`campaign-${t.id}`}>Campaña o punto de origen</label>
+            <input id={`campaign-${t.id}`} className="input" maxLength={48} value={campaign}
+              onChange={(e) => setCampaign(e.target.value)} placeholder="mostrador, ticket, evento-septiembre…" />
+            <p className={`hint mt-1 ${campaign.trim() && !campaignSlug ? 'text-amber-300' : ''}`}>
+              {campaign.trim() && !campaignSlug
+                ? 'Etiqueta no válida: no uses URLs, emails, teléfonos ni identificadores largos.'
+                : 'Etiqueta operativa sin datos personales. Se atribuirán votos, clics y tickets.'}
+            </p>
+          </div>
+          <a href={`/api/tenants/qr?tenantId=${encodeURIComponent(t.id)}${campaignSlug ? `&campaign=${encodeURIComponent(campaignSlug)}` : ''}`}
+            className="btn-primary btn-sm">
+            <QrCode size={13} /> Descargar QR SVG
+          </a>
+        </div>
+      )}
 
       {!demo && (
         <div className="flex flex-wrap gap-2" aria-label="Exportación de datos">
@@ -170,7 +194,7 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
             {[
               { label: 'Votos', value: String(stats.total), icon: <Star size={14} /> },
               { label: 'Nota media', value: stats.avgStars != null ? `${stats.avgStars}★` : '—', icon: <Star size={14} /> },
-              { label: 'A plataformas', value: String(stats.redirects), icon: <ExternalLink size={14} /> },
+              { label: 'Clics públicos', value: String(stats.clicks ?? 0), icon: <ExternalLink size={14} /> },
               { label: 'Tickets abiertos', value: String(stats.ticketsOpen), icon: <MessageSquareWarning size={14} /> },
             ].map((k) => (
               <div key={k.label} className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
@@ -218,6 +242,20 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
             </div>
           </div>
         </>
+      )}
+
+      {!demo && stats?.campaigns?.length > 0 && (
+        <div>
+          <p className="mb-2 text-sm font-semibold text-white">Rendimiento por campaña</p>
+          <div className="overflow-x-auto rounded-xl border border-white/10">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-white/[0.04] text-ink-400"><tr><th className="p-2">Campaña</th><th className="p-2">Votos</th><th className="p-2">Clics</th><th className="p-2">Tickets</th></tr></thead>
+              <tbody>{stats.campaigns.map((item: any) => (
+                <tr key={item.campaign} className="border-t border-white/10"><td className="p-2 font-medium text-white">{item.campaign}</td><td className="p-2">{item.votes}</td><td className="p-2">{item.clicks}</td><td className="p-2">{item.tickets}</td></tr>
+              ))}</tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* URLs públicas + estado */}

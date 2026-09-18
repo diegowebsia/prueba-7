@@ -1,5 +1,5 @@
 # ============================================================
-# ReviewFlow AI v3.12.0 — Imagen de producción agnóstica
+# ReviewFlow AI v3.13.0 — Imagen de producción agnóstica
 # Node.js 24 puro + Next.js standalone. Sin Vercel.
 # Build:  docker build -t reviewflow-ai:3.4.0 .
 # Run:    docker run -p 3000:3000 --env-file .env reviewflow-ai:3.4.0

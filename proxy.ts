@@ -4,9 +4,9 @@ import { createServerClient } from '@supabase/ssr';
 import { isTrialExpired, TRIAL_DAYS } from '@/lib/plans';
 
 /**
- * ReviewFlow AI v3.12.0 — Middleware de seguridad y negocio (modelo 100% de pago).
+ * ReviewFlow AI v3.13.0 — Middleware de seguridad y negocio (modelo 100% de pago).
  *
- * Nota v3.12.0: `/api/cron/*`, `/api/queue/*` y `/api/feedback/*` pasan por
+ * Nota v3.13.0: `/api/cron/*`, `/api/queue/*` y `/api/feedback/*` pasan por
  * Proxy solo para trazabilidad, pero se protegen internamente (CRON_SECRET, firma QStash,
  * membresía o rate-limit según el caso).
  *

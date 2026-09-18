@@ -1,4 +1,4 @@
-# 🧑‍💻 GUIA_PASOS_MANUALES — Solo lo que tienes que hacer tú (v3.12.0)
+# 🧑‍💻 GUIA_PASOS_MANUALES — Solo lo que tienes que hacer tú (v3.13.0)
 
 Todo el código está programado, probado y con `npm run build` en verde. Esta guía lista
 **únicamente** lo que requiere tus cuentas, tus claves o tus decisiones: rellenar, pegar y clicar.
@@ -17,7 +17,7 @@ Nada de programar.
 | [9. Datos fiscales, logo y textos](#9-datos-fiscales-logo-y-textos) | 20 min | ✅ Sí |
 | [10. Verificación final y prueba E2E](#10-verificación-final-prueba-e2e) | 15 min | ✅ Sí |
 | [11. Troubleshooting de cuotas y cobros](#11-troubleshooting-cuotas-402429-y-cobros) | — | Consulta |
-| [12. Automatización v3.12.0 (cron, cola, TripAdvisor, embudo)](#12-automatización-v3120-cron-cola-tripadvisor-y-embudo) | 30 min | ⭕ Recomendado |
+| [12. Automatización v3.13.0 (cron, cola, TripAdvisor, embudo)](#12-automatización-v3130-cron-cola-tripadvisor-y-embudo) | 30 min | ⭕ Recomendado |
 
 > Despliegue (hosting, dominio, Docker, Vercel): [GUIA_GRATIS.md](../GUIA_GRATIS.md) para probar a 0 €
 > y [GUIA_DESPLIEGUE.md](../GUIA_DESPLIEGUE.md) para producción.
@@ -195,7 +195,7 @@ Las URLs públicas del embudo (TripAdvisor/Trustpilot) van en la pestaña *Embud
    - **Proyecto existente** (vienes de v3.4.0 o anterior) → ejecuta en orden
      `supabase/migration_3_2_0.sql` → `migration_3_3_0.sql` → `migration_3_4_0.sql` →
      `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` →
-     `migration_3_9_0.sql` (modelo 100 % de pago) → `migration_3_10_0.sql` → `migration_3_11_0.sql` → **`migration_3_12_0.sql`**
+     `migration_3_9_0.sql` (modelo 100 % de pago) → `migration_3_10_0.sql` → `migration_3_11_0.sql` → `migration_3_12_0.sql` → **`migration_3_13_0.sql`**
      (3.11: seguridad/rate limits/multipack; 3.12: webhooks observables; puedes re-ejecutar la cadena sin romper datos).
 4. **Pool de conexiones (recomendado)**: Project Settings → **Database → Connection string →
    Connection pooling** → copia la URI del **puerto 6543** (Supavisor, modo *transaction*) a
@@ -205,7 +205,7 @@ Las URLs públicas del embudo (TripAdvisor/Trustpilot) van en la pestaña *Embud
    el usuario entra directamente tras registrarse).
 5. Auth → **URL Configuration**: `Site URL` = tu `NEXT_PUBLIC_APP_URL` y añade
    `https://tudominio.com/**` a *Redirect URLs*.
-6. Verifica que las migraciones 3.9.0 y 3.12.0 dejaron:
+6. Verifica que las migraciones 3.9.0 y 3.13.0 dejaron:
    - `tenants.plan` aceptando **solo `pro | business`** (las filas legacy o gratuitas migran
      solas al plan de pago equivalente; sin plan gratuito).
    - `reviews.source` aceptando `tripadvisor` (+ `places`), `integrations.provider` aceptando
@@ -580,7 +580,7 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
 
 ---
 
-## 12. Automatización v3.12.0 (cron, cola, TripAdvisor y embudo)
+## 12. Automatización v3.13.0 (cron, cola, TripAdvisor y embudo)
 
 Todo funciona sin esto (en línea/manual), pero para vender con volumen configúralo.
 Detalle completo en [GUIA_AUTOMATIZACION.md](../GUIA_AUTOMATIZACION.md); aquí solo tu checklist:

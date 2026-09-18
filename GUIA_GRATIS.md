@@ -1,4 +1,4 @@
-# 🆓 GUIA_GRATIS — ReviewFlow AI a 0 € (v3.12.0)
+# 🆓 GUIA_GRATIS — ReviewFlow AI a 0 € (v3.13.0)
 
 Dos cosas en un solo documento:
 
@@ -75,7 +75,7 @@ Dos cosas en un solo documento:
    - ¿Ya tenías la BD de una versión anterior? Ejecuta en orden las migraciones
      `migration_3_2_0.sql` → `migration_3_3_0.sql` → `migration_3_4_0.sql` →
      `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` →
-     `migration_3_8_0.sql` → `migration_3_9_0.sql` → `migration_3_10_0.sql` → `migration_3_11_0.sql` → **`migration_3_12_0.sql`**
+     `migration_3_8_0.sql` → `migration_3_9_0.sql` → `migration_3_10_0.sql` → `migration_3_11_0.sql` → `migration_3_12_0.sql` → **`migration_3_13_0.sql`**
      (todas idempotentes; 3.11 añade el hardening principal y 3.12 la idempotencia observable de webhooks).
 
 4. **Opcional pero útil**: *Project Settings → Database → Connection pooling* → copia la cadena
@@ -171,7 +171,7 @@ Dos cosas en un solo documento:
 | 2 planes de pago + cuotas + recargas | ✅ idéntico a producción (Stripe test) |
 | IA medida por tokens | ✅ presupuesto real por plan (con clave de OpenAI o con plantilla local) |
 | Webhook de Stripe | ✅ mismo endpoint firmado que en live (`npm run verify` lo comprueba) |
-| PostgreSQL + RLS + índices | ✅ Supabase Free (500 MB) con migración 3.12.0 |
+| PostgreSQL + RLS + índices | ✅ Supabase Free (500 MB) con migración 3.13.0 |
 | Protección de datos | ✅ topes por tabla, purga automática y fallbacks |
 | Coste total | **0 €** hasta que decidas vender |
 

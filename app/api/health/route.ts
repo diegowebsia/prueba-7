@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   const mode = new URL(req.url).searchParams.get('mode') ?? 'live';
   if (mode !== 'ready') {
-    return NextResponse.json({ ok: true, service: 'reviewflow-ai', version: '3.12.0' }, {
+    return NextResponse.json({ ok: true, service: 'reviewflow-ai', version: '3.13.0' }, {
       headers: { 'Cache-Control': 'no-store' },
     });
   }

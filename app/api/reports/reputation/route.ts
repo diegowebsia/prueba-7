@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireOwner } from '@/lib/authz';
+import { responseSla } from '@/lib/reputation-metrics';
 
 const Query = z.object({ tenantId: z.string().uuid() });
 
-type Review = { rating: number; reply_text: string | null; created_at: string };
+type Review = { rating: number; reply_text: string | null; replied_at: string | null; created_at: string };
 type Feedback = { stars: number; kind: string; status: string; created_at: string };
 
 function average(values: number[]): number | null {
@@ -23,7 +24,7 @@ export async function GET(req: Request) {
 
   const since60 = new Date(Date.now() - 60 * 86400_000).toISOString();
   const [{ data: reviews, error: reviewsError }, { data: feedback, error: feedbackError }, { data: integrations }] = await Promise.all([
-    admin.from('reviews').select('rating,reply_text,created_at').eq('tenant_id', parsed.data.tenantId)
+    admin.from('reviews').select('rating,reply_text,replied_at,created_at').eq('tenant_id', parsed.data.tenantId)
       .gte('created_at', since60).order('created_at', { ascending: false }).limit(5000),
     admin.from('feedback_responses').select('stars,kind,status,created_at').eq('tenant_id', parsed.data.tenantId)
       .gte('created_at', since60).order('created_at', { ascending: false }).limit(5000),
@@ -39,7 +40,9 @@ export async function GET(req: Request) {
   const currentAverage = average(current.map((row) => row.rating));
   const previousAverage = average(previous.map((row) => row.rating));
   const distribution = Object.fromEntries([1, 2, 3, 4, 5].map((star) => [star, current.filter((row) => row.rating === star).length]));
-  const replied = current.filter((row) => Boolean(row.reply_text)).length;
+  const answered = current.filter((row) => Boolean(row.reply_text));
+  const replied = answered.length;
+  const sla = responseSla(answered);
 
   return NextResponse.json({
     ok: true,
@@ -54,6 +57,7 @@ export async function GET(req: Request) {
       replied,
       pendingReply: current.length - replied,
       responseRate: current.length ? Math.round((replied / current.length) * 1000) / 10 : 0,
+      ...sla,
     },
     feedback: {
       total: feedbackRows.filter((row) => new Date(row.created_at).getTime() >= boundary).length,
