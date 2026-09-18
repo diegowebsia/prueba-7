@@ -10,11 +10,12 @@ type Props = {
   hasGoogle: boolean;
   hasTripadvisor: boolean;
   hasTrustpilot: boolean;
+  demo?: boolean;
 };
 
 type Links = { google: string | null; tripadvisor: string | null; trustpilot: string | null };
 
-export default function FunnelClient({ slug, businessName, campaign }: Props) {
+export default function FunnelClient({ slug, businessName, campaign, demo = false }: Props) {
   const [stars, setStars] = useState(0);
   const [hover, setHover] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -31,6 +32,13 @@ export default function FunnelClient({ slug, businessName, campaign }: Props) {
     setBusy(true);
     setError(null);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        setStars(value);
+        setLinks({ google: null, tripadvisor: null, trustpilot: null });
+        setShowTicketForm(true);
+        return;
+      }
       const res = await fetch('/api/feedback/respond', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug, stars: value, campaign }),
@@ -54,6 +62,12 @@ export default function FunnelClient({ slug, businessName, campaign }: Props) {
     setBusy(true);
     setError(null);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        setShowTicketForm(false);
+        setTicketDone(true);
+        return;
+      }
       const res = await fetch('/api/feedback/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -55,6 +55,13 @@ export function TenantCard({
   const [copied, setCopied] = useState(false);
 
   const plan = planOf(t.plan);
+  const subscriptionLabel: Record<string, string> = {
+    active: 'suscripción activa',
+    trialing: 'periodo de prueba',
+    past_due: 'pago pendiente',
+    canceled: 'suscripción cancelada',
+    inactive: 'suscripción inactiva',
+  };
   const integ = (p: string) => t.integrations.find((i) => i.provider === p);
   const busy = (key: string) => syncing === key;
 
@@ -65,6 +72,11 @@ export function TenantCard({
   async function saveSettings() {
     setSaving(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        toast({ kind: 'success', title: 'Cambios simulados', body: 'En una cuenta activa, estos ajustes quedarían guardados para tu empresa.' });
+        return;
+      }
       const res = await fetch('/api/tenants/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -96,6 +108,13 @@ export function TenantCard({
     }
     setSaving(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        toast({ kind: 'success', title: 'Conexión simulada', body: 'Trustpilot aparecería conectado sin mostrar de nuevo la credencial introducida.' });
+        setTpKey('');
+        setTpUnit('');
+        return;
+      }
       const res = await fetch('/api/integrations/trustpilot/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -125,6 +144,12 @@ export function TenantCard({
     }
     setSaving(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        toast({ kind: 'success', title: 'Conexión simulada', body: 'La ficha aparecería conectada y lista para sincronizar opiniones.' });
+        setTaLoc('');
+        return;
+      }
       const res = await fetch('/api/integrations/tripadvisor/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -153,6 +178,11 @@ export function TenantCard({
     }
     setSaving(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        toast({ kind: 'success', title: 'Envío simulado', body: 'En una cuenta activa recibirías ahora el mensaje de prueba.' });
+        return;
+      }
       const res = await fetch('/api/integrations/whatsapp/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -209,7 +239,7 @@ export function TenantCard({
             )}
           </span>
           <span className="mt-1 block truncate text-xs text-ink-400">
-            {plan.label} · {t.subscription_status}
+            {plan.label} · {subscriptionLabel[t.subscription_status] ?? 'estado pendiente'}
             {t.integrations.length > 0 && ` · ${t.integrations.length} conexión(es)`}
           </span>
         </span>
@@ -251,8 +281,8 @@ export function TenantCard({
                     meta: planHasFeature(t.plan, 'storeIntegration')
                       ? integ('shopify') || integ('woocommerce') || integ('store')
                         ? 'Conectada · WhatsApp al entregar activo'
-                        : 'Plan Completo · WhatsApp automático al entregar'
-                      : 'Requiere el plan Completo E-commerce',
+                        : 'Plan Business · WhatsApp automático al entregar'
+                      : 'Disponible en el plan Business',
                     content: <StoreConnect tenant={t} demo={demo} />,
                   },
                   {

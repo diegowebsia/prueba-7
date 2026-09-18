@@ -63,6 +63,12 @@ export function TriageCard({
   async function genPrivate() {
     setLoadingMsg(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        setPrivateMsg(`Hola ${r.author}, sentimos que tu experiencia no haya sido la esperada. Queremos revisar lo ocurrido y ayudarte personalmente. ¿Podemos contactar contigo para encontrar una solución?`);
+        toast({ kind: 'success', title: 'Mensaje privado de ejemplo listo', body: 'Puedes revisarlo y adaptarlo antes de enviarlo.' });
+        return;
+      }
       const res = await fetch('/api/reviews/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,6 +105,21 @@ export function TriageCard({
   async function inspect() {
     setLoadingScan(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 450));
+        const sample: Inspection = {
+          severity: r.rating <= 2 ? 'alta' : 'media',
+          category: 'experiencia del cliente',
+          legalRisk: false,
+          suggestedChannel: 'privado',
+          summary: 'El cliente expresa insatisfacción y espera una respuesta personal.',
+          actionPlan: ['Contactar con el cliente', 'Revisar lo ocurrido con el equipo', 'Confirmar la solución y hacer seguimiento'],
+          provider: 'local-heuristic',
+        };
+        setInspection(sample);
+        toast({ kind: 'success', title: 'Análisis de ejemplo completado', body: `Prioridad ${sample.severity} · ${sample.category}` });
+        return;
+      }
       const res = await fetch('/api/reviews/triage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -127,6 +148,11 @@ export function TriageCard({
   async function saveNote() {
     setSavingNote(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        toast({ kind: 'success', title: 'Nota simulada', body: 'En una cuenta activa, solo tu equipo podría verla.' });
+        return;
+      }
       const res = await fetch('/api/reviews/private-note', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -166,16 +192,14 @@ export function TriageCard({
 
       <p className="mt-3 text-sm leading-relaxed text-ink-200">{r.text}</p>
 
-      {!demo && (
-        <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
           <button onClick={inspect} disabled={loadingScan} className="btn-secondary btn-sm">
             {loadingScan ? <Spinner label="Inspeccionando…" size={13} /> : (<><ScanSearch size={13} /> Inspeccionar queja con IA</>)}
           </button>
           <button onClick={genPrivate} disabled={loadingMsg} className="btn-secondary btn-sm">
             {loadingMsg ? <Spinner label="Redactando…" size={13} /> : (<><Mail size={13} /> Mensaje privado conciliador</>)}
           </button>
-        </div>
-      )}
+      </div>
 
       <AnimatePresence initial={false}>
         {inspection && (
@@ -227,7 +251,7 @@ export function TriageCard({
                 ))}
               </ul>
               <p className="mt-2 text-2xs text-ink-500">
-                Análisis: {inspection.provider === 'openai' ? 'OpenAI' : 'heurística local (sin clave OpenAI)'} · 1 evento de IA consumido
+                Análisis automático · revisa siempre la recomendación antes de actuar
               </p>
             </div>
           </motion.div>

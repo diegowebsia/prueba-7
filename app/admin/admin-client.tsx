@@ -245,14 +245,7 @@ export function AdminClient({ email, demo, tenants, stats, logs, integrations }:
             >
               <TriangleAlert size={18} className="mt-0.5 shrink-0 text-amber-300" />
               <p>
-                <strong className="font-bold">Modo demo:</strong> sin Supabase conectado o sin sesión
-                de super-admin, así que ves datos de ejemplo. Para activar el panel real añade{' '}
-                <code className="rounded bg-white/[0.08] px-1.5 py-0.5 font-mono text-2xs">
-                  SUPERADMIN_EMAILS=tu@email.com
-                </code>{' '}
-                al <code className="font-mono text-2xs">.env</code> junto a las claves de Supabase
-                (guía completa en <code className="font-mono text-2xs">docs/GUIA_PASOS_MANUALES.md</code>),
-                entra con ese email y abre <code className="font-mono text-2xs">/admin</code>.
+                <strong className="font-bold">Vista de ejemplo:</strong> estás viendo datos ficticios y ninguna acción afectará a clientes reales. La activación técnica del panel interno está documentada únicamente en las guías privadas de despliegue.
               </p>
             </motion.div>
           )}
@@ -647,7 +640,7 @@ export function AdminClient({ email, demo, tenants, stats, logs, integrations }:
                 <div className="card p-5">
                   <h2 className="font-bold tracking-tightish text-white">Estado de integraciones</h2>
                   <p className="mt-1 text-sm text-ink-400">
-                    Detectado desde las variables de entorno del servidor.
+                    Comprobación automática de los servicios necesarios para operar.
                   </p>
                   <div className="mt-4 divide-y divide-white/[0.06]">
                     {integrations.map((i) => (
@@ -662,7 +655,7 @@ export function AdminClient({ email, demo, tenants, stats, logs, integrations }:
                           </span>
                         ) : (
                           <span className="badge-danger shrink-0">
-                            <XCircle size={12} /> falta en .env
+                            <XCircle size={12} /> requiere atención
                           </span>
                         )}
                       </div>

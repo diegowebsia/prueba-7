@@ -319,8 +319,8 @@ export function StorageCaps({ storage, className }: { storage: StorageView; clas
 
       <p className="flex items-start gap-1.5 text-xs text-ink-500">
         <ShieldCheck size={13} className="mt-0.5 shrink-0 text-emerald-400" />
-        Purga automática activa: tu historial de actividad se conserva {storage.logRetentionDays} días y
-        cada tabla tiene un tope por empresa. Así tu plan nunca dispara sobrecostes en Supabase/PostgreSQL.
+        Protección automática activa: tu historial de actividad se conserva {storage.logRetentionDays} días y
+        los límites de almacenamiento evitan cargos inesperados.
       </p>
     </div>
   );

@@ -46,7 +46,7 @@ export async function GET(req: Request) {
   if (!price) {
     return NextResponse.json(
       {
-        error: `Falta ${plan === 'business' ? 'STRIPE_PRICE_BUSINESS' : 'STRIPE_PRICE_PRO'} en el .env.`,
+        error: 'El pago de este plan no está disponible temporalmente. Contacta con soporte.',
         code: 'missing_price_id',
       },
       { status: 500 },

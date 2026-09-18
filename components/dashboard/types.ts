@@ -129,7 +129,11 @@ export function describeApiError(status: number, data: ApiError | null): {
   body?: string;
   action?: { label: string; onClick: () => void };
 } {
-  const message = data?.error ?? `Error ${status}`;
+  const rawMessage = data?.error ?? `Error ${status}`;
+  const exposesTechnicalSetup = /supabase|service_role|next_public|stripe[^.]*configur|\.env|smtp|price[_ ]id/i.test(rawMessage);
+  const message = status >= 500 || exposesTechnicalSetup
+    ? 'El servicio no está disponible temporalmente. Reinténtalo o contacta con soporte si continúa.'
+    : rawMessage;
   if (status === 429) {
     return {
       kind: 'warning',

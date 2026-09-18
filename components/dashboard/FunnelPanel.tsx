@@ -17,13 +17,27 @@ import { normalizeCampaign } from '@/lib/campaign';
 import { Spinner } from '@/components/Skeleton';
 import type { TenantInfo } from '@/components/dashboard/types';
 
+const DEMO_STATS = {
+  total: 86,
+  avgStars: 4.6,
+  clicks: 41,
+  ticketsOpen: 3,
+  byStars: { 1: 2, 2: 3, 3: 8, 4: 21, 5: 52 },
+  byChannel: { google: 29, tripadvisor: 7, trustpilot: 5, none: 45 },
+  campaigns: [
+    { campaign: 'mostrador', votes: 38, clicks: 21, tickets: 1 },
+    { campaign: 'ticket', votes: 29, clicks: 13, tickets: 1 },
+    { campaign: 'evento-septiembre', votes: 19, clicks: 7, tickets: 1 },
+  ],
+};
+
 /**
  * Flujo Neutral de Valoración: enlace público /valorar/[slug],
  * estadísticas (media, 1-5★, canales), tickets 1-3★ y ajustes de URLs.
  */
 export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boolean }) {
   const toast = useToast();
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<any>(demo ? DEMO_STATS : null);
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -141,8 +155,7 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
         </div>
       </div>
 
-      {!demo && (
-        <div className="grid gap-2 rounded-xl border border-brand-400/20 bg-brand-500/[0.04] p-3 sm:grid-cols-[1fr_auto] sm:items-end">
+      <div className="grid gap-2 rounded-xl border border-brand-400/20 bg-brand-500/[0.04] p-3 sm:grid-cols-[1fr_auto] sm:items-end">
           <div>
             <label className="label" htmlFor={`campaign-${t.id}`}>Campaña o punto de origen</label>
             <input id={`campaign-${t.id}`} className="input" maxLength={48} value={campaign}
@@ -153,12 +166,15 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
                 : 'Etiqueta operativa sin datos personales. Se atribuirán votos, clics y tickets.'}
             </p>
           </div>
-          <a href={`/api/tenants/qr?tenantId=${encodeURIComponent(t.id)}${campaignSlug ? `&campaign=${encodeURIComponent(campaignSlug)}` : ''}`}
-            className="btn-primary btn-sm">
-            <QrCode size={13} /> Descargar QR SVG
-          </a>
+          {demo ? (
+            <span className="btn-secondary btn-sm cursor-default opacity-75"><QrCode size={13} /> QR disponible al activar</span>
+          ) : (
+            <a href={`/api/tenants/qr?tenantId=${encodeURIComponent(t.id)}${campaignSlug ? `&campaign=${encodeURIComponent(campaignSlug)}` : ''}`}
+              className="btn-primary btn-sm">
+              <QrCode size={13} /> Descargar QR SVG
+            </a>
+          )}
         </div>
-      )}
 
       {!demo && (
         <div className="flex flex-wrap gap-2" aria-label="Exportación de datos">
@@ -177,10 +193,6 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-ink-400">
           <Loader2 size={15} className="animate-spin" /> Cargando estadísticas…
-        </p>
-      ) : demo ? (
-        <p className="text-sm text-ink-400">
-          Modo demo: conecta Supabase para ver votos, canales y tickets reales.
         </p>
       ) : !stats || stats.total === 0 ? (
         <p className="text-sm text-ink-400">
@@ -244,7 +256,7 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
         </>
       )}
 
-      {!demo && stats?.campaigns?.length > 0 && (
+      {stats?.campaigns?.length > 0 && (
         <div>
           <p className="mb-2 text-sm font-semibold text-white">Rendimiento por campaña</p>
           <div className="overflow-x-auto rounded-xl border border-white/10">

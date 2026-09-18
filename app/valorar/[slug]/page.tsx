@@ -17,7 +17,20 @@ export default async function ValorarPage({ params, searchParams }: Props) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const campaign = normalizeCampaign(query.campaign);
   const admin = createAdminClient();
-  if (!admin) notFound();
+  if (!admin) {
+    if (slug !== 'demo') notFound();
+    return (
+      <FunnelClient
+        slug="demo"
+        businessName="Restaurante La Brasa"
+        campaign={campaign}
+        hasGoogle
+        hasTripadvisor
+        hasTrustpilot
+        demo
+      />
+    );
+  }
 
   const { data: tenant } = await admin
     .from('tenants')

@@ -142,16 +142,16 @@ export default async function AdminPage() {
   }
 
   const integrations = [
-    { name: 'Supabase (service_role)', ok: isSupabaseAdminConfigured, hint: 'BASE de datos y cuotas' },
-    { name: 'SUPERADMIN_EMAILS', ok: isSuperAdminConfigured, hint: 'Acceso al panel interno' },
-    { name: 'Stripe API', ok: isStripeConfigured, hint: 'Checkout, suscripciones y portal' },
-    { name: 'Stripe Webhook', ok: isStripeWebhookConfigured, hint: 'Suscripciones + recargas' },
+    { name: 'Base de datos', ok: isSupabaseAdminConfigured, hint: 'Datos, acceso y cuotas' },
+    { name: 'Control de administradores', ok: isSuperAdminConfigured, hint: 'Acceso al panel interno' },
+    { name: 'Sistema de pagos', ok: isStripeConfigured, hint: 'Checkout, suscripciones y portal' },
+    { name: 'Confirmación de pagos', ok: isStripeWebhookConfigured, hint: 'Suscripciones y recargas' },
     ...ALL_ADDON_CATALOG.map((pack) => ({
       name: `Recarga · ${pack.name}`,
       ok: Boolean(addonPriceIdFor(pack.id)),
-      hint: `${pack.priceEnv} (si no se define, se cobra ${pack.priceCents / 100} € con price_data)`,
+      hint: `Precio previsto: ${pack.priceCents / 100} €`,
     })),
-    { name: 'SMTP correo', ok: isSmtpConfigured, hint: 'Avisos y resúmenes' },
+    { name: 'Correo transaccional', ok: isSmtpConfigured, hint: 'Avisos y resúmenes' },
     { name: 'OpenAI (opcional)', ok: isOpenAIConfigured, hint: 'Sin ella: plantillas locales' },
     { name: 'Google OAuth (opcional)', ok: isGoogleConfigured, hint: 'Business Profile + publicación' },
     { name: 'WhatsApp (opcional)', ok: isWhatsappConfigured, hint: 'Alertas ≤3★ y post-venta' },

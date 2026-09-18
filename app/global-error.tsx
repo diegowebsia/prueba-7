@@ -28,9 +28,7 @@ export default function GlobalError({
               La aplicación no ha podido arrancar esta vista
             </h1>
             <p className="mt-2.5 text-sm text-[#8A94AC]">
-              Recarga para volver a intentarlo. Si el problema continúa, revisa las claves del{' '}
-              <code className="rounded bg-white/[0.08] px-1.5 py-0.5 font-mono text-xs">.env</code>{' '}
-              y el endpoint <code className="font-mono text-xs">/api/health</code>.
+              Recarga para volver a intentarlo. Si el problema continúa, contacta con soporte e indica la referencia que aparece debajo.
             </p>
             {error?.digest && (
               <p className="mt-4 font-mono text-xs text-[#5A6785]">referencia: {error.digest}</p>

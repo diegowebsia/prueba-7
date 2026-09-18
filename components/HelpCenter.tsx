@@ -135,31 +135,6 @@ export function HelpCenter({ open, onClose }: HelpCenterProps) {
                     ),
                   },
                   {
-                    id: 'help-credenciales',
-                    title: 'Credenciales y .env (servidor)',
-                    icon: <KeyRound size={16} className="text-amber-300" />,
-                    meta: 'Dueño del proyecto',
-                    content: (
-                      <div className="space-y-3">
-                        <p className="text-sm text-ink-300">
-                          Se configuran <strong>una sola vez</strong> en el servidor (<Kbd>cp .env.example .env</Kbd>).
-                          Las obligatorias:
-                        </p>
-                        <StepList
-                          items={[
-                            'Supabase: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY y SUPABASE_SERVICE_ROLE_KEY (Project Settings → API).',
-                            'Stripe: STRIPE_SECRET_KEY, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET y los Price IDs de los planes Pro y Business.',
-                            'SMTP (Brevo o similar) para los emails de aviso y las peticiones de opiniones.',
-                          ]}
-                        />
-                        <p className="text-xs text-ink-500">
-                          El resto (OpenAI, Google, WhatsApp, SMTP) son opcionales: la app funciona en modo
-                          demo sin ellas y lo indica en el panel.
-                        </p>
-                      </div>
-                    ),
-                  },
-                  {
                     id: 'help-stripe',
                     title: 'Planes y recargas (Stripe)',
                     icon: <CreditCard size={16} className="text-emerald-300" />,

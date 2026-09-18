@@ -249,7 +249,7 @@ export function BillingPanel({
         ) : (
           <p className="mt-3 text-sm text-ink-400">
             {demo
-              ? 'Modo demo: conecta Supabase y Stripe para ver tu consumo real.'
+              ? 'Vista de ejemplo: el consumo real aparecerá aquí al activar tu cuenta.'
               : 'No se pudo cargar el consumo. Recarga la página.'}
           </p>
         )}

@@ -29,6 +29,7 @@ import { TriageCard } from '@/components/dashboard/TriageCard';
 import { ReviewCard } from '@/components/dashboard/ReviewCard';
 import { BillingPanel } from '@/components/dashboard/BillingPanel';
 import { FunnelPanel } from '@/components/dashboard/FunnelPanel';
+import { CustomerOverview } from '@/components/dashboard/CustomerOverview';
 import type { TenantInfo } from '@/components/dashboard/types';
 import { TRIAL_DAYS, planOf } from '@/lib/plans';
 import type { DemoReview } from '@/lib/demo';
@@ -137,6 +138,12 @@ export function DashboardClient({
 
   async function sync(provider: 'google' | 'trustpilot' | 'tripadvisor' | 'places', tenantId: string) {
     setSyncing(`${provider}-${tenantId}`);
+    if (demo) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      toast({ kind: 'success', title: 'Sincronización simulada', body: 'En una cuenta activa, las opiniones nuevas aparecerían ahora en la bandeja.' });
+      setSyncing(null);
+      return;
+    }
     const endpoint =
       provider === 'trustpilot'
         ? '/api/integrations/trustpilot/sync'
@@ -267,14 +274,21 @@ export function DashboardClient({
           <div className="card flex items-start gap-3 border-amber-400/25 bg-amber-400/[0.07]">
             <TriangleAlert size={17} className="mt-0.5 shrink-0 text-amber-300" />
             <div className="text-sm">
-              <p className="font-bold text-white">Modo demo</p>
+              <p className="font-bold text-white">Vista de ejemplo · Plan {primaryTenant ? planOf(primaryTenant.plan).tier : 'Pro'}</p>
               <p className="mt-0.5 text-ink-300">
-                Estás viendo datos de ejemplo. Conecta Supabase + Stripe (ver{' '}
-                <code className="rounded bg-white/[0.08] px-1.5 py-0.5 font-mono text-xs">GUIA_GRATIS.md</code>)
-                para usar tu panel real con cuotas y cobros.
+                Explora el panel con datos ficticios. Puedes probar las acciones principales: nada se publica ni se guarda.
               </p>
             </div>
           </div>
+        )}
+
+        {primaryTenant && (hasAccess || demo) && (
+          <CustomerOverview
+            tenant={primaryTenant}
+            pending={stats.pending}
+            demo={demo}
+            onNavigate={setTab}
+          />
         )}
 
         {/* Sin suscripción y sin empresa → activar prueba */}
@@ -434,6 +448,7 @@ export function DashboardClient({
                         draft={drafts[r.id]}
                         published={publishedIds.has(r.id)}
                         tone={toneFor(r)}
+                        demo={demo}
                         onDraftChange={(id, value) => setDrafts((d) => ({ ...d, [id]: value }))}
                         onPublished={(id) => setPublishedIds((s) => new Set(s).add(id))}
                       />
@@ -543,12 +558,11 @@ export function DashboardClient({
 
               {demo && tenants.length > 0 && (
                 <p className="text-xs text-ink-500">
-                  Modo demo: las conexiones se activan al configurar Supabase y las claves de cada
-                  proveedor. Paso a paso resumido en el botón{' '}
+                  Vista de ejemplo: las conexiones están simuladas y no envían datos. Consulta{' '}
                   <button type="button" onClick={() => setHelpOpen(true)} className="font-semibold text-brand-200 underline-offset-2 hover:underline">
                     Ayuda
                   </button>{' '}
-                  de la cabecera.
+                  para conocer el proceso de conexión de cada servicio.
                 </p>
               )}
             </motion.div>

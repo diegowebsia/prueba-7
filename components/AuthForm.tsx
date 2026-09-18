@@ -83,7 +83,7 @@ export function AuthForm({ mode }: { mode: 'signin' | 'signup' }) {
       const msg: string = err?.message ?? 'Error de autenticación.';
       const friendly =
         msg.includes('placeholder') || msg.includes('Failed to fetch')
-          ? 'Supabase no está configurado en este servidor. Define NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en el .env (ver GUIA_GRATIS.md).'
+          ? 'El acceso no está disponible temporalmente. Inténtalo de nuevo en unos minutos o contacta con soporte.'
           : msg === 'Invalid login credentials'
             ? 'Email o contraseña incorrectos. ¿Quizá aún no tienes cuenta?'
             : msg.includes('Password should be at least')

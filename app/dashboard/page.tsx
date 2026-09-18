@@ -51,15 +51,22 @@ export default async function DashboardPage({
         access: true,
         settings: {
           tone: 'cercano',
-          place_id: 'ChIJJ3y5 Example-Place-ID',
-          whatsapp_to: '34600000000',
+          place_id: 'ChIJDemoReviewFlow',
+          whatsapp_to: d.plan === 'business' ? '34600000000' : undefined,
           place_rating: 4.7,
+          funnel_enabled: true,
         },
-        api_key: 'rf_demo_0000000000',
-        integrations: [
-          { provider: 'google', status: 'connected', last_sync_at: new Date().toISOString() },
-          { provider: 'trustpilot', status: 'disconnected', last_sync_at: null },
-        ],
+        api_key: null,
+        integrations: d.plan === 'business'
+          ? [
+              { provider: 'google', status: 'connected', last_sync_at: new Date().toISOString() },
+              { provider: 'shopify', status: 'connected', last_sync_at: new Date().toISOString() },
+              { provider: 'whatsapp', status: 'connected', last_sync_at: new Date().toISOString() },
+            ]
+          : [
+              { provider: 'google', status: 'connected', last_sync_at: new Date().toISOString() },
+              { provider: 'trustpilot', status: 'connected', last_sync_at: new Date().toISOString() },
+            ],
       },
     ];
     hasSubscriptionWithAccess = true;

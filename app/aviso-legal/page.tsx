@@ -16,8 +16,7 @@ export default function AvisoLegalPage() {
         <li><strong>Nombre comercial:</strong> {brand} ({domain})</li>
       </ul>
       <p>
-        <em>Nota del editor: los datos identificativos se configuran de forma centralizada
-        (variables NEXT_PUBLIC_* / lib/site.ts). Este documento es una plantilla y no constituye asesoramiento jurídico.</em>
+        <em>Este documento es una plantilla informativa y no constituye asesoramiento jurídico.</em>
       </p>
       <h2>2. Objeto</h2>
       <p>

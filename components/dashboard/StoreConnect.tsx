@@ -122,7 +122,7 @@ export function StoreConnect({ tenant: t, demo }: { tenant: TenantInfo; demo: bo
   }
 
   if (demo) {
-    return <p className="text-sm text-ink-400">Modo demo: conecta Supabase para registrar tu tienda.</p>;
+    return <p className="text-sm text-ink-400">Vista de ejemplo: aquí conectarías tu tienda mediante un asistente seguro. No se enviará ni guardará ningún dato.</p>;
   }
 
   return (

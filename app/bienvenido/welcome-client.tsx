@@ -154,8 +154,7 @@ export function WelcomeClient({
       )}
       {demo && (
         <p className="mx-auto mt-5 max-w-xl rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3.5 text-center text-sm text-ink-300">
-          Modo demo (sin Supabase/Stripe): los botones se activan al configurar las claves del
-          <code className="mx-1 rounded bg-white/[0.08] px-1.5 py-0.5 font-mono text-xs">.env</code>.
+          Vista de ejemplo: puedes comparar ambos planes sin realizar ningún cargo ni guardar datos.
         </p>
       )}
 

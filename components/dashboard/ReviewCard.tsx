@@ -20,6 +20,7 @@ export function ReviewCard({
   draft,
   published,
   tone,
+  demo,
   onDraftChange,
   onPublished,
 }: {
@@ -27,6 +28,7 @@ export function ReviewCard({
   draft?: string;
   published: boolean;
   tone: 'profesional' | 'cercano' | 'formal';
+  demo: boolean;
   onDraftChange: (id: string, value: string) => void;
   onPublished: (id: string) => void;
 }) {
@@ -41,6 +43,16 @@ export function ReviewCard({
     setGenerating(true);
     setShowDraft(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 450));
+        const greeting = tone === 'formal' ? `Estimada/o ${r.author},` : `Hola ${r.author},`;
+        const body = r.rating >= 4
+          ? 'muchas gracias por compartir tu experiencia. Nos alegra saber que has disfrutado de tu visita y esperamos volver a verte pronto.'
+          : 'gracias por contarnos lo ocurrido. Sentimos que la experiencia no estuviera a la altura y revisaremos lo sucedido con el equipo para mejorar.';
+        onDraftChange(r.id, `${greeting} ${body}`);
+        toast({ kind: 'success', title: 'Borrador de ejemplo listo', body: 'Puedes editarlo y simular su publicación.' });
+        return;
+      }
       const res = await fetch('/api/reviews/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,6 +93,12 @@ export function ReviewCard({
     }
     setPublishing(true);
     try {
+      if (demo) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        onPublished(r.id);
+        toast({ kind: 'success', title: 'Publicación simulada', body: 'En una cuenta activa, la respuesta quedaría guardada o se publicaría en el canal conectado.' });
+        return;
+      }
       const res = await fetch('/api/reviews/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
