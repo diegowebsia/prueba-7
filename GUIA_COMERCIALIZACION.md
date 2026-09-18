@@ -1,4 +1,4 @@
-# 💰 GUIA_COMERCIALIZACION — Todo lo que TIENES QUE PONER TÚ para vender al público (v3.10.0)
+# 💰 GUIA_COMERCIALIZACION — Todo lo que TIENES QUE PONER TÚ para vender al público (v3.11.0)
 
 El código está 100 % programado: planes de pago con prueba de 7 días, cobros, cuotas,
 panel, integraciones y textos legales base. **Esta guía lista, bloque por bloque, todo lo
@@ -329,7 +329,7 @@ estructuradas, no asesoramiento jurídico**. Antes de vender:
 - [ ] **Rutina semanal (30 min)**: `/admin` → Suscripciones (trials por caducar, `past_due`),
   Empresas nuevas (bienvenida personal), Logs (errores/webhooks en rojo). Detalle en
   [GUIA_ADMIN §7](./GUIA_ADMIN.md).
-- [ ] **Monitorización**: activa alertas de tu hosting (caídas) + revisa `GET /api/health?db=1`
+- [ ] **Monitorización**: activa alertas de tu hosting (caídas) + revisa `GET /api/admin/db`
   (latencia BD) y Stripe → Webhooks (entregas en verde). Opcional: UptimeRobot/BetterStack
   gratuitos contra `/api/health`. Si usas cron+cola, vigila `/admin → Logs` (`cron.sync`,
   `queue.*`) y el dashboard de Upstash.
@@ -346,7 +346,7 @@ Hazlo en este orden. **No abras el registro público con ninguna casilla en rojo
 - [ ] `npm run typecheck` → 0 errores · `npm run build` → ✓ Compiled successfully.
 - [ ] `npm run verify -- --url https://tudominio.com` → todo verde (health, IA, pool PG,
   precios Stripe, firma del webhook válida→2xx / falsa→400, rutas de IA sin sesión→401).
-- [ ] `GET /api/health?verbose=1` → `version: "3.10.0"` y en verde todo lo que configuraste.
+- [ ] `GET /api/health?mode=ready` → `version: "3.11.0"` y en verde todo lo que configuraste.
 - [ ] `GET /api/stripe/webhook` (super-admin) → modo `live`, eventos y precios detectados.
 - [ ] `/admin` sin banner de demo; pestaña *Sistema* con planes, recargas e integraciones en «listo».
 
@@ -444,4 +444,4 @@ Cada cosa que tienes que aportar, con su destino exacto. Úsala como índice.
 | **Total orientativo** | **~15–60 €/mes** (hasta ~200 € con TripAdvisor) | Con 2–3 clientes Pro ya cubierto |
 
 ¡A vender! 🚀 Si algo falla en producción, el orden de diagnóstico es:
-`/admin → Logs` → `GET /api/health?verbose=1` → Stripe → Webhooks → esta guía (Bloque 13).
+`/admin → Logs` → `GET /api/health?mode=ready` → Stripe → Webhooks → esta guía (Bloque 13).

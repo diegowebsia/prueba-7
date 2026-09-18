@@ -566,11 +566,11 @@ export function DashboardClient({
             >
               <div>
                 <h2 className="flex items-center gap-2 text-base font-bold tracking-tightish text-white">
-                  <Filter size={16} className="text-brand-300" /> Embudo Privado de Satisfacción
+                  <Filter size={16} className="text-brand-300" /> Flujo Neutral de Valoración
                 </h2>
                 <p className="mt-1 text-sm text-ink-400">
-                  Tu enlace público clasifica cada voto: 4-5★ salen a las plataformas y 1-3★ llegan como
-                  ticket privado con aviso inmediato.
+                  Tu enlace ofrece las mismas plataformas a todas las puntuaciones y añade soporte privado opcional
+                  para quien quiera atención directa.
                 </p>
               </div>
               {tenants.length === 0 && !demo && (

@@ -830,6 +830,10 @@ export async function consume(
     /* sin función RPC → fallback */
   }
 
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('RPC consume_quota no disponible; consumo bloqueado para preservar consistencia.');
+  }
+
   const field = METRIC_COLUMN[metric];
   const counters = await readCounters(admin, tenantId, cycle);
   const next = {

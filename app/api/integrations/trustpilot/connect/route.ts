@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requirePaidAccess } from '@/lib/usage';
+import { encryptCredentials } from '@/lib/credentials';
 
 const Body = z.object({
   tenantId: z.string().min(1),
@@ -15,7 +16,7 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'API key o Business Unit ID inválidos.' }, { status: 400 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -42,17 +43,18 @@ export async function POST(req: Request) {
     return NextResponse.json(gate.body, { status: gate.status, headers: gate.headers });
   }
 
-  await admin.from('integrations').upsert(
+  const { error: saveError } = await admin.from('integrations').upsert(
     {
       tenant_id: parsed.data.tenantId,
       provider: 'trustpilot',
       status: 'connected',
-      credentials: { apiKey: parsed.data.apiKey, businessUnitId: parsed.data.businessUnitId },
+      credentials: encryptCredentials({ apiKey: parsed.data.apiKey, businessUnitId: parsed.data.businessUnitId }),
       external_label: 'Trustpilot Business',
       last_error: null,
     },
     { onConflict: 'tenant_id,provider' },
   );
+  if (saveError) return NextResponse.json({ error: 'No se pudo guardar la integración.' }, { status: 500 });
 
   return NextResponse.json({ ok: true, message: 'Trustpilot conectado. Pulsa «Sincronizar» para importar.' });
 }

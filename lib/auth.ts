@@ -18,7 +18,7 @@ export async function requireSuperAdmin(): Promise<AdminGuard> {
       demo: true,
     };
   }
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -33,7 +33,7 @@ export async function requireSuperAdmin(): Promise<AdminGuard> {
 /** Sesión normal para /dashboard. */
 export async function getSessionUser() {
   if (!isSupabaseConfigured) return null;
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

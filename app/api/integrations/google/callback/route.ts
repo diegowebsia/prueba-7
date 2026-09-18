@@ -3,64 +3,61 @@ import { exchangeGoogleCode } from '@/lib/google';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { systemLog } from '@/lib/logger';
+import { verifyOAuthState } from '@/lib/security';
+import { encryptCredentials } from '@/lib/credentials';
 
-/** Callback OAuth: verifica sesión + membresía y guarda los tokens. */
+function redirect(req: Request, status: string) {
+  const url = new URL('/dashboard', req.url);
+  url.searchParams.set('google', status);
+  const response = NextResponse.redirect(url);
+  response.cookies.delete('google_oauth_verifier');
+  return response;
+}
+
+/** Callback OAuth con state firmado, TTL, vinculación a usuario y PKCE. */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
-  const tenantId = url.searchParams.get('state');
-  const dash = new URL('/dashboard', req.url);
+  const state = verifyOAuthState(url.searchParams.get('state') ?? '');
+  const verifier = /(?:^|;\s*)google_oauth_verifier=([^;]+)/.exec(req.headers.get('cookie') ?? '')?.[1];
+  if (!code || !state || !verifier) return redirect(req, 'invalid_state');
 
-  if (!code || !tenantId) {
-    dash.searchParams.set('google', 'error');
-    return NextResponse.redirect(dash);
-  }
-
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.redirect(new URL('/login?redirect=/dashboard', req.url));
+  if (user.id !== state.userId) return redirect(req, 'forbidden');
 
   const admin = createAdminClient();
-  if (!admin) {
-    dash.searchParams.set('google', 'nodb');
-    return NextResponse.redirect(dash);
-  }
-
-  const { data: member } = await admin
-    .from('memberships')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('user_id', user.id)
-    .single();
-  if (!member) {
-    dash.searchParams.set('google', 'forbidden');
-    return NextResponse.redirect(dash);
-  }
+  if (!admin) return redirect(req, 'nodb');
+  const { data: member } = await admin.from('memberships').select('id')
+    .eq('tenant_id', state.tenantId).eq('user_id', user.id).single();
+  if (!member) return redirect(req, 'forbidden');
+  const { error: claimError } = await admin.from('processed_events').insert({
+    provider: 'google_oauth', tenant_scope: state.tenantId, event_id: state.nonce,
+  });
+  if (claimError?.code === '23505') return redirect(req, 'invalid_state');
+  if (claimError) return redirect(req, 'error');
 
   try {
-    const tokens = await exchangeGoogleCode(code);
-    await admin.from('integrations').upsert(
-      {
-        tenant_id: tenantId,
-        provider: 'google',
-        status: 'connected',
-        credentials: {
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token ?? null,
-          obtained_at: new Date().toISOString(),
-        },
-        external_label: 'Google Business Profile',
-        last_error: null,
-      },
-      { onConflict: 'tenant_id,provider' },
-    );
-    await systemLog('info', 'integrations.google', `Google conectado`, { tenantId });
-    dash.searchParams.set('google', 'connected');
-  } catch (e: any) {
-    await systemLog('error', 'integrations.google', e?.message ?? 'OAuth falló', { tenantId });
-    dash.searchParams.set('google', 'error');
+    const tokens = await exchangeGoogleCode(code, decodeURIComponent(verifier));
+    const { error } = await admin.from('integrations').upsert({
+      tenant_id: state.tenantId,
+      provider: 'google',
+      status: 'connected',
+      credentials: encryptCredentials({
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token ?? null,
+        obtained_at: new Date().toISOString(),
+      }),
+      external_label: 'Google Business Profile',
+      last_error: null,
+    }, { onConflict: 'tenant_id,provider' });
+    if (error) throw error;
+    await systemLog('info', 'integrations.google', 'Google conectado', { tenantId: state.tenantId });
+    return redirect(req, 'connected');
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'OAuth falló';
+    await systemLog('error', 'integrations.google', message, { tenantId: state.tenantId });
+    return redirect(req, 'error');
   }
-  return NextResponse.redirect(dash);
 }

@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   let tenantId: string | null = null;
   if (!isDemo) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createHash } from 'crypto';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isTrialExpired } from '@/lib/plans';
@@ -7,21 +6,21 @@ import { googleReviewLink } from '@/lib/maps';
 import { enqueue } from '@/lib/queue';
 import { whatsappTemplateLang, whatsappTemplateName } from '@/lib/whatsapp';
 import { systemLog } from '@/lib/logger';
+import { consumeRateLimit } from '@/lib/rate-limit';
+import { escapeHtml, hashPersonalValue, requestIp, signOpaqueId, verifyOpaqueId } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * ============================================================
- * Embudo Privado de Satisfacción — voto público (sin sesión)
+ * Flujo Neutral de Valoración — voto público (sin sesión)
  * ============================================================
  * `POST /api/feedback/respond`
- *   · `{ slug, stars: 4|5 }` → guarda `redirect` y devuelve los enlaces
- *     públicos (Google Maps, TripAdvisor, Trustpilot) configurados.
- *   · `{ slug, stars: 1|2|3, message, name?, contact?, orderId? }` →
- *     guarda `ticket` PRIVADO y avisa al dueño (email + WhatsApp).
+ *   · Toda puntuación guarda el voto y recibe los mismos enlaces públicos.
+ *   · Un mensaje opcional crea además un ticket privado y avisa al dueño.
  *
  * Reglas: embudo activado + suscripción usable (sin free-riding) +
- * rate-limit anti-spam por IP (10 votos/min, best-effort en serverless).
+ * rate-limit anti-spam por IP (10 votos/min, distribuido en PostgreSQL).
  */
 const Body = z.object({
   slug: z.string().min(1).max(120),
@@ -30,37 +29,20 @@ const Body = z.object({
   name: z.string().max(120).optional(),
   contact: z.string().max(160).optional(),
   orderId: z.string().max(100).optional(),
+  responseId: z.string().uuid().optional(),
+  clickToken: z.string().min(20).optional(),
 });
 
-// Rate-limit en memoria por IP (cada instancia; suficiente anti-spam).
-const HITS = new Map<string, number[]>();
-const WINDOW_MS = 60_000;
-const MAX_HITS = 10;
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const list = (HITS.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  list.push(now);
-  HITS.set(ip, list);
-  return list.length > MAX_HITS;
-}
-
-function clientIp(req: Request): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown'
-  );
-}
 
 export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Parámetros inválidos.' }, { status: 400 });
   const input = parsed.data;
 
-  const ip = clientIp(req);
-  if (rateLimited(ip)) {
-    return NextResponse.json({ error: 'Demasiados votos. Espera un minuto.' }, { status: 429 });
+  const ip = requestIp(req);
+  const rate = await consumeRateLimit('feedback', ip, 10, 60);
+  if (!rate.allowed) {
+    return NextResponse.json({ error: 'Demasiados votos. Espera un minuto.' }, { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } });
   }
 
   const admin = createAdminClient();
@@ -82,52 +64,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Este enlace de valoración no está disponible.' }, { status: 404 });
   }
 
-  const ipHash = createHash('sha256').update(ip).digest('hex').slice(0, 32);
+  const ipHash = hashPersonalValue(ip).slice(0, 32);
   const userAgent = (req.headers.get('user-agent') ?? '').slice(0, 200);
 
-  // ---- 4-5 ★: redirección a plataformas públicas ----
-  if (input.stars >= 4) {
-    const links = {
-      google: settings.place_id ? googleReviewLink(settings.place_id) : null,
-      tripadvisor: (settings.tripadvisor_url as string) || null,
-      trustpilot: (settings.trustpilot_url as string) || null,
-    };
-    const { data: row, error } = await admin
-      .from('feedback_responses')
-      .insert({
-        tenant_id: tenant.id,
-        stars: input.stars,
-        kind: 'redirect',
-        ip_hash: ipHash,
-        user_agent: userAgent,
-      })
-      .select('id')
-      .single();
-    if (error || !row) return NextResponse.json({ error: 'No se pudo registrar tu voto.' }, { status: 500 });
-    return NextResponse.json({ ok: true, responseId: row.id, kind: 'redirect', links });
-  }
-
-  // ---- 1-3 ★: ticket PRIVADO + aviso interno al dueño ----
+  // Las opciones públicas son idénticas para todas las puntuaciones (sin review gating).
+  const links = {
+    google: settings.place_id ? googleReviewLink(settings.place_id) : null,
+    tripadvisor: (settings.tripadvisor_url as string) || null,
+    trustpilot: (settings.trustpilot_url as string) || null,
+  };
   const message = (input.message ?? '').trim();
-  if (!message) {
-    return NextResponse.json({ error: 'Cuéntanos qué ha fallado (mensaje obligatorio).' }, { status: 400 });
+  const isTicket = Boolean(message);
+  const existingId = isTicket && input.responseId && input.clickToken &&
+    verifyOpaqueId(input.responseId, input.clickToken) ? input.responseId : null;
+  const values = {
+    tenant_id: tenant.id, stars: input.stars, kind: isTicket ? 'ticket' : 'redirect',
+    customer_name: isTicket ? input.name?.trim() || null : null,
+    contact: isTicket ? input.contact?.trim() || null : null,
+    message: isTicket ? message : null,
+    order_id: isTicket ? input.orderId?.trim() || null : null,
+    ip_hash: ipHash, user_agent: userAgent,
+  };
+  const query = existingId
+    ? admin.from('feedback_responses').update(values).eq('id', existingId).eq('tenant_id', tenant.id).select('id').single()
+    : admin.from('feedback_responses').insert(values).select('id').single();
+  const { data: row, error } = await query;
+  if (error || !row) return NextResponse.json({ error: 'No se pudo registrar tu valoración.' }, { status: 500 });
+  const clickToken = signOpaqueId(String(row.id));
+  if (!isTicket) {
+    return NextResponse.json({
+      ok: true, responseId: row.id, clickToken, kind: 'redirect', links,
+      allowPrivateFeedback: input.stars <= 3,
+    });
   }
-  const { data: row, error } = await admin
-    .from('feedback_responses')
-    .insert({
-      tenant_id: tenant.id,
-      stars: input.stars,
-      kind: 'ticket',
-      customer_name: input.name?.trim() || null,
-      contact: input.contact?.trim() || null,
-      message,
-      order_id: input.orderId?.trim() || null,
-      ip_hash: ipHash,
-      user_agent: userAgent,
-    })
-    .select('id')
-    .single();
-  if (error || !row) return NextResponse.json({ error: 'No se pudo enviar tu mensaje.' }, { status: 500 });
 
   // Aviso interno (nunca público): email + WhatsApp al dueño, encolado.
   const excerpt = message.length > 220 ? `${message.slice(0, 220)}…` : message;
@@ -158,9 +127,5 @@ export async function POST(req: Request) {
     });
   }
 
-  return NextResponse.json({ ok: true, responseId: row.id, kind: 'ticket' });
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return NextResponse.json({ ok: true, responseId: row.id, clickToken, kind: 'ticket', links });
 }

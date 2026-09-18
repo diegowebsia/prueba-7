@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: `Política de privacidad — ${brand}
 
 export default function PrivacidadPage() {
   return (
-    <LegalLayout title="Política de privacidad (RGPD / LOPDGDD)" updated="17 de septiembre de 2026">
+    <LegalLayout title="Política de privacidad (RGPD / LOPDGDD)" updated="18 de septiembre de 2026">
       <h2>1. Responsable del tratamiento</h2>
       <ul>
         <li><strong>{companyName}</strong> ({cif}), {address}</li>
@@ -18,7 +18,8 @@ export default function PrivacidadPage() {
         <li><strong>Empresas:</strong> nombre del negocio, miembros y configuración.</li>
         <li><strong>Reseñas:</strong> datos ya públicos en origen (autor, texto, puntuación) para su gestión.</li>
         <li><strong>Facturación:</strong> gestionada por Stripe; no almacenamos tarjetas.</li>
-        <li><strong>Técnicos:</strong> logs de seguridad y cookies necesarias.</li>
+        <li><strong>Soporte y mensajería:</strong> mensajes facilitados voluntariamente, teléfono, consentimiento y estado de atención.</li>
+        <li><strong>Técnicos:</strong> agente de usuario, logs de seguridad e IP seudonimizada con HMAC; no guardamos la IP en claro.</li>
       </ul>
       <h2>3. Finalidades y base jurídica (art. 6 RGPD)</h2>
       <ul>
@@ -36,13 +37,16 @@ export default function PrivacidadPage() {
       </p>
       <h2>5. Conservación</h2>
       <p>
-        Conservamos los datos mientras dure la cuenta y, tras la baja, bloqueados durante los
-        plazos legales (p. ej. 6 años mercantil/fiscal). Puedes solicitar la supresión cuando quieras.
+        Las reseñas y mensajes operativos se conservan según el límite y periodo del plan; los logs de
+        seguridad, hasta 365 días; la deduplicación técnica, 90 días; y los rate limits caducados, 24 horas.
+        Los datos de cuenta se eliminan o anonimizan tras la baja salvo facturación y obligaciones legales
+        (hasta 6 años en materia mercantil/fiscal). Los opt-ins se conservan mientras estén vigentes y como
+        prueba de consentimiento durante el plazo legal aplicable.
       </p>
       <h2>6. Tus derechos</h2>
       <p>
         Acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a{' '}
-        {legalEmail} con copia de tu DNI. También puedes reclamar ante la{' '}
+        {legalEmail}. Verificaremos tu identidad de forma proporcional y sin pedir más datos de los necesarios. También puedes reclamar ante la{' '}
         <a href="https://www.aepd.es" target="_blank" rel="noreferrer">AEPD</a>
         (www.aepd.es). Respondemos en el plazo legal de un mes.
       </p>

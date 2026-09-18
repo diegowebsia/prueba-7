@@ -4,6 +4,7 @@ import { syncGoogleBusinessForTenant, syncGooglePlacesForTenant } from '@/lib/go
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { systemLog } from '@/lib/logger';
+import { decryptCredentials } from '@/lib/credentials';
 
 const Body = z.object({
   tenantId: z.string().min(1),
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Falta tenantId.' }, { status: 400 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
     .eq('tenant_id', tenantId)
     .eq('provider', 'google')
     .single();
-  const creds = (integ?.credentials as any) ?? {};
+  const creds = decryptCredentials<any>(integ?.credentials);
   const hasOAuth = Boolean(creds.refresh_token || creds.access_token);
 
   // `auto`: prefiere OAuth (permite publicar respuestas) y cae a Places.

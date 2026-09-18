@@ -1,4 +1,4 @@
-# ⚙️ GUIA_AUTOMATIZACION — Cron, colas, plantillas WhatsApp, opt-in y Embudo (v3.10.0)
+# ⚙️ GUIA_AUTOMATIZACION — Cron, colas, plantillas WhatsApp, opt-in y Embudo (v3.11.0)
 
 Todo lo automático de ReviewFlow AI: qué hace solo el código y qué debes configurar tú
 (claves, plantillas, checkbox del checkout). Sin estos pasos, la plataforma funciona igual
@@ -102,14 +102,14 @@ sin consentimiento registrado. Añade este checkbox al checkout:
 - El cliente se da de baja respondiendo **STOP**/**BAJA** (revoca solo) o desde tu
   panel (`/api/integrations/whatsapp/optin`, action `revoke`).
 
-## 6. Embudo Privado de Satisfacción (`/valorar/[slug]`)
+## 6. Flujo Neutral de Valoración (`/valorar/[slug]`)
 
 1. Activo por defecto. Tu enlace: `https://tudominio.com/valorar/TU-SLUG` (pestaña
    **Embudo** → copiar). Compártelo en QR de mostrador, ticket o web.
 2. En la pestaña **Embudo** pega tus URLs públicas de **TripAdvisor** y **Trustpilot**
    (Google sale de tu Place ID). Sin URL, ese botón no se muestra.
-3. Flujo: el cliente vota 1-5★ → **4-5★** ve los botones públicos (mides cada clic) →
-   **1-3★** deja un mensaje privado y te llega email + WhatsApp al instante.
+3. Flujo neutral: cualquier puntuación ve los mismos botones públicos (mides cada clic).
+   Además, quien lo necesite puede dejar un mensaje privado y recibir atención directa.
 4. El enlace solo funciona con suscripción usable (sin free-riding tras una baja) y
    lleva rate-limit anti-spam (10 votos/min por IP).
 
@@ -117,7 +117,7 @@ sin consentimiento registrado. Añade este checkbox al checkout:
 
 ```bash
 curl -s https://tudominio.com/api/health | python3 -m json.tool
-# version 3.10.0 · tripadvisor/queue/cron en true
+# version 3.11.0 · tripadvisor/queue/cron en true
 
 # Cron manual (sustituye el secreto):
 curl -s -H "Authorization: Bearer TU_CRON_SECRET" \

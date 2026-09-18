@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from '@/lib/http';
 /**
  * WhatsApp Cloud API (Meta) — alertas reales al móvil del negocio.
  * Configuración (Meta for Developers → tu app → WhatsApp):
@@ -26,7 +27,7 @@ export async function sendWhatsapp(to: string, body: string): Promise<string | u
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneId) throw new Error('WhatsApp no configurado (WHATSAPP_TOKEN / WHATSAPP_PHONE_NUMBER_ID).');
 
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `https://graph.facebook.com/${whatsappApiVersion()}/${phoneId}/messages`,
     {
       method: 'POST',
@@ -86,7 +87,7 @@ export async function sendWhatsappTemplate(
     components.unshift({ type: 'header', parameters: tpl.headerParams.map(textParam) });
   }
 
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `https://graph.facebook.com/${whatsappApiVersion()}/${phoneId}/messages`,
     {
       method: 'POST',

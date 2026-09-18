@@ -4,9 +4,9 @@ import { createServerClient } from '@supabase/ssr';
 import { isTrialExpired, TRIAL_DAYS } from '@/lib/plans';
 
 /**
- * ReviewFlow AI v3.10.0 — Middleware de seguridad y negocio (modelo 100% de pago).
+ * ReviewFlow AI v3.11.0 — Middleware de seguridad y negocio (modelo 100% de pago).
  *
- * Nota v3.10.0: `/api/cron/*`, `/api/queue/*` y `/api/feedback/*` quedan FUERA del
+ * Nota v3.11.0: `/api/cron/*`, `/api/queue/*` y `/api/feedback/*` quedan FUERA del
  * matcher a propósito y se protegen internamente (CRON_SECRET, firma QStash,
  * membresía o rate-limit según el caso).
  *
@@ -31,7 +31,7 @@ import { isTrialExpired, TRIAL_DAYS } from '@/lib/plans';
  *   `enforce()` con api_key/HMAC): webhooks de Shopify/WooCommerce, ingesta por
  *   API, aviso de pedido entregado y callback OAuth de Google.
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
@@ -77,14 +77,9 @@ export async function middleware(req: NextRequest) {
 
   const supabase = createServerClient(supabaseUrl, supabaseAnon, {
     cookies: {
-      get(name: string) {
-        return req.cookies.get(name)?.value;
-      },
-      set(name: string, value: string, options: any) {
-        res.cookies.set({ name, value, ...options });
-      },
-      remove(name: string, options: any) {
-        res.cookies.set({ name, value: '', ...options });
+      getAll() { return req.cookies.getAll(); },
+      setAll(values) {
+        for (const { name, value, options } of values) res.cookies.set(name, value, options);
       },
     },
   });
@@ -188,7 +183,9 @@ function isPublicIntegrationPath(pathname: string): boolean {
     pathname === '/api/integrations/store/order-delivered' ||
     pathname.startsWith('/api/integrations/store/order-delivered/') ||
     pathname === '/api/integrations/google/callback' ||
-    pathname.startsWith('/api/integrations/google/callback/')
+    pathname.startsWith('/api/integrations/google/callback/') ||
+    pathname === '/api/integrations/whatsapp/webhook' ||
+    pathname.startsWith('/api/integrations/whatsapp/webhook/')
   );
 }
 
@@ -236,6 +233,7 @@ async function checkSubscriptionAccess(
       {
         headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
         cache: 'no-store',
+        signal: AbortSignal.timeout(8_000),
       },
     );
     if (!r.ok) return null;

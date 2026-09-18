@@ -8,9 +8,9 @@ export const dynamic = 'force-dynamic';
 type Props = { params: { slug: string } };
 
 /**
- * Embudo Privado de Satisfacción (página pública del negocio).
+ * Flujo Neutral de Valoración (página pública del negocio).
  * Solo expone datos seguros (nombre + slug); los enlaces públicos salen
- * tras votar 4-5★ y los tickets 1-3★ nunca se publican.
+ * tras cualquier puntuación; los mensajes de soporte opcionales nunca se publican.
  */
 export default async function ValorarPage({ params }: Props) {
   const admin = createAdminClient();

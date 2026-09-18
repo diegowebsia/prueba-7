@@ -20,6 +20,7 @@ export default function FunnelClient({ slug, businessName }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [links, setLinks] = useState<Links | null>(null);
   const [responseId, setResponseId] = useState<string | null>(null);
+  const [clickToken, setClickToken] = useState<string | null>(null);
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [ticketDone, setTicketDone] = useState(false);
   const [form, setForm] = useState({ name: '', contact: '', message: '', orderId: '' });
@@ -29,21 +30,17 @@ export default function FunnelClient({ slug, businessName }: Props) {
     setBusy(true);
     setError(null);
     try {
-      if (value >= 4) {
-        const res = await fetch('/api/feedback/respond', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug, stars: value }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error ?? 'No se pudo registrar tu voto.');
-        setResponseId(data.responseId);
-        setLinks(data.links);
-        setStars(value);
-      } else {
-        setStars(value);
-        setShowTicketForm(true);
-      }
+      const res = await fetch('/api/feedback/respond', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, stars: value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? 'No se pudo registrar tu voto.');
+      setResponseId(data.responseId);
+      setClickToken(data.clickToken);
+      setLinks(data.links);
+      setStars(value);
+      setShowTicketForm(Boolean(data.allowPrivateFeedback));
     } catch (e: any) {
       setError(e?.message ?? 'Error inesperado.');
     } finally {
@@ -66,11 +63,16 @@ export default function FunnelClient({ slug, businessName }: Props) {
           name: form.name.trim() || undefined,
           contact: form.contact.trim() || undefined,
           orderId: form.orderId.trim() || undefined,
+          responseId: responseId || undefined,
+          clickToken: clickToken || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? 'No se pudo enviar tu mensaje.');
       setResponseId(data.responseId);
+      setClickToken(data.clickToken);
+      setLinks(data.links);
+      setShowTicketForm(false);
       setTicketDone(true);
     } catch (e: any) {
       setError(e?.message ?? 'Error inesperado.');
@@ -84,7 +86,7 @@ export default function FunnelClient({ slug, businessName }: Props) {
       await fetch('/api/feedback/click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ responseId, channel }),
+        body: JSON.stringify({ responseId, clickToken, channel }),
       });
     } catch {
       /* la medición no bloquea la salida */
@@ -136,7 +138,7 @@ export default function FunnelClient({ slug, businessName }: Props) {
         {links && (
           <div className="mt-8 space-y-3 text-left">
             <p className="flex items-center gap-2 text-center text-sm text-emerald-300">
-              <CheckCircle2 size={17} /> ¡Gracias por tu {stars}★! Cuéntalo donde prefieras:
+              <CheckCircle2 size={17} /> Gracias por tu {stars}★. Si quieres, comparte tu experiencia donde prefieras:
             </p>
             {links.google && (
               <button onClick={() => openChannel('google', links.google as string)} className="btn-light w-full">
@@ -168,7 +170,7 @@ export default function FunnelClient({ slug, businessName }: Props) {
           <div className="mt-8 space-y-3 text-left">
             <p className="flex items-start gap-2 text-sm text-amber-200">
               <MessageSquareWarning size={17} className="mt-0.5 shrink-0" />
-              Vaya, sentimos tu {stars}★. Cuéntanos qué ha fallado y lo resolvemos en privado (no se publicará).
+              Si quieres atención directa, cuéntanos qué ha ocurrido. Este mensaje será privado; las opciones públicas siguen disponibles arriba.
             </p>
             <textarea
               value={form.message}

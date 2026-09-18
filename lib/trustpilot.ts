@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from '@/lib/http';
 /**
  * Trustpilot Business API (reseñas reales de tu tienda/negocio).
  * Cada empresa guarda su API key + Business Unit ID en `integrations`
@@ -21,7 +22,7 @@ export async function fetchTrustpilotReviews(
   const url =
     `https://api.trustpilot.com/v1/business-units/${encodeURIComponent(businessUnitId)}` +
     `/reviews?perPage=100&apikey=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  const res = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } });
   if (!res.ok) throw new Error(`Trustpilot error (${res.status}): revisa API key y Business Unit ID.`);
   const data = await res.json();
   return (data.reviews ?? []).map((r: any) => ({

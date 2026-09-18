@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * ============================================================
- * Endpoint de IA (v3.10.0)
+ * Endpoint de IA (v3.11.0)
  *
  * Modo asíncrono: `{ ..., "async": true }` (solo `task: 'reply'`) encola el
  * trabajo en QStash y responde 202 `{ queued: true, jobId }`; el resultado se
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
   const input = parsed.data;
 
   // ---- 1. Sesión --------------------------------------------------
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

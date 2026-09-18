@@ -1,4 +1,4 @@
-# 🧑‍💻 GUIA_PASOS_MANUALES — Solo lo que tienes que hacer tú (v3.10.0)
+# 🧑‍💻 GUIA_PASOS_MANUALES — Solo lo que tienes que hacer tú (v3.11.0)
 
 Todo el código está programado, probado y con `npm run build` en verde. Esta guía lista
 **únicamente** lo que requiere tus cuentas, tus claves o tus decisiones: rellenar, pegar y clicar.
@@ -17,7 +17,7 @@ Nada de programar.
 | [9. Datos fiscales, logo y textos](#9-datos-fiscales-logo-y-textos) | 20 min | ✅ Sí |
 | [10. Verificación final y prueba E2E](#10-verificación-final-prueba-e2e) | 15 min | ✅ Sí |
 | [11. Troubleshooting de cuotas y cobros](#11-troubleshooting-cuotas-402429-y-cobros) | — | Consulta |
-| [12. Automatización v3.10.0 (cron, cola, TripAdvisor, embudo)](#12-automatización-v3100-cron-cola-tripadvisor-y-embudo) | 30 min | ⭕ Recomendado |
+| [12. Automatización v3.11.0 (cron, cola, TripAdvisor, embudo)](#12-automatización-v3110-cron-cola-tripadvisor-y-embudo) | 30 min | ⭕ Recomendado |
 
 > Despliegue (hosting, dominio, Docker, Vercel): [GUIA_GRATIS.md](../GUIA_GRATIS.md) para probar a 0 €
 > y [GUIA_DESPLIEGUE.md](../GUIA_DESPLIEGUE.md) para producción.
@@ -64,7 +64,7 @@ cp .env.example .env
 | 17 | `SMTP_HOST` · `SMTP_PORT` · `SMTP_USER` · `SMTP_PASS` · `SMTP_FROM` | Credenciales de tu proveedor de correo | Brevo / Postmark / SES / Mailgun / Gmail App Password | ⭕ |
 | 18 | `OPENAI_API_KEY` | Clave secreta de OpenAI (`sk-…` o `sk-proj-…`) | [platform.openai.com](https://platform.openai.com/api-keys) → **Create new secret key** | ⭕ |
 | 19 | `OPENAI_MODEL` | Modelo de los borradores | — (por defecto `gpt-4o-mini`) | ⭕ |
-| 19b | `DATABASE_URL` | Cadena **directa** de PostgreSQL contra el **Connection Pooler** de Supabase (puerto 6543, modo transaction). Da diagnóstico (`/api/health?db=1`, `/api/admin/db`) y mantenimiento (purga). Sin ella la app funciona igual. | Supabase → Project Settings → **Database** → Connection string → *Connection pooling* | ⭕ |
+| 19b | `DATABASE_URL` | Cadena **directa** de PostgreSQL contra el **Connection Pooler** de Supabase (puerto 6543, modo transaction). Da diagnóstico (`/api/admin/db`) y mantenimiento (purga). Sin ella la app funciona igual. | Supabase → Project Settings → **Database** → Connection string → *Connection pooling* | ⭕ |
 | 19c | `DATABASE_POOL_MAX` · `DATABASE_IDLE_TIMEOUT_MS` · `DATABASE_CONNECT_TIMEOUT_MS` · `DATABASE_STATEMENT_TIMEOUT_MS` · `DATABASE_SSL` | Ajustes del pool (por defecto `5` · `10000` · `8000` · `8000` · `require`) | En Vercel/serverless: `DATABASE_POOL_MAX=3`; en VPS: `10-20` | ⭕ |
 | 19d | `OPENAI_TIMEOUT_MS` · `OPENAI_MAX_ATTEMPTS` · `OPENAI_RPM_PER_TENANT` · `OPENAI_MAX_CONCURRENCY` · `OPENAI_BASE_URL` | Blindaje del cliente de IA (por defecto `20000` · `3` · `20` · `6` · sin proxy) | Ajústalos solo si tu proveedor o tu plan lo exige | ⭕ |
 | 20 | `GOOGLE_CLIENT_ID` | Client ID OAuth 2.0 (tipo **Web**) | Google Cloud → APIs & Services → **Credentials** | ⭕ |
@@ -195,18 +195,17 @@ Las URLs públicas del embudo (TripAdvisor/Trustpilot) van en la pestaña *Embud
    - **Proyecto existente** (vienes de v3.4.0 o anterior) → ejecuta en orden
      `supabase/migration_3_2_0.sql` → `migration_3_3_0.sql` → `migration_3_4_0.sql` →
      `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` →
-     `migration_3_9_0.sql` (modelo 100 % de pago) → **`migration_3_10_0.sql`** (TripAdvisor,
-     opt-ins WhatsApp, Embudo Privado, `job_id` de IA async)
-     (todas idempotentes: puedes re-ejecutarlas sin romper nada).
+     `migration_3_9_0.sql` (modelo 100 % de pago) → `migration_3_10_0.sql` → **`migration_3_11_0.sql`**
+     (seguridad, idempotencia, rate limits y multipack; puedes re-ejecutar la cadena sin romper datos).
 4. **Pool de conexiones (recomendado)**: Project Settings → **Database → Connection string →
    Connection pooling** → copia la URI del **puerto 6543** (Supavisor, modo *transaction*) a
    `DATABASE_URL`. Es lo que permite aguantar picos de tráfico comercial sin agotar las conexiones
-   de Postgres; el CRUD sigue yendo por PostgREST. Verifícalo en `GET /api/health?db=1`.
+   de Postgres; el CRUD sigue yendo por PostgREST. Verifícalo en `GET /api/admin/db`.
 5. Auth → **Providers → Email** → activado (confirmación de email a tu gusto: si la desactivas,
    el usuario entra directamente tras registrarse).
 5. Auth → **URL Configuration**: `Site URL` = tu `NEXT_PUBLIC_APP_URL` y añade
    `https://tudominio.com/**` a *Redirect URLs*.
-6. Verifica que las migraciones 3.9.0 y 3.10.0 dejaron:
+6. Verifica que las migraciones 3.9.0 y 3.11.0 dejaron:
    - `tenants.plan` aceptando **solo `pro | business`** (las filas legacy o gratuitas migran
      solas al plan de pago equivalente; sin plan gratuito).
    - `reviews.source` aceptando `tripadvisor` (+ `places`), `integrations.provider` aceptando
@@ -525,8 +524,8 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
    npm run start       # o `npm run dev`
    ```
 
-2. `GET /api/health?verbose=1` → `version: "3.10.0"` y todas las integraciones que configuraste en
-   verde (`configured: true`). Si añadiste `DATABASE_URL`, comprueba también `GET /api/health?db=1`.
+2. `GET /api/health?mode=ready` → `version: "3.11.0"` y todas las integraciones que configuraste en
+   verde (`configured: true`). Si añadiste `DATABASE_URL`, comprueba también `GET /api/admin/db`.
    Atajo: `npm run verify` lo revisa todo, incluida la firma del webhook de Stripe.
 3. Panel interno (`/admin`, privado) → **sin** banner de modo demo; pestaña *Sistema* con todas
    las integraciones en «listo», incluidos los Price ID de Pro/Business y las 4 recargas.
@@ -581,7 +580,7 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
 
 ---
 
-## 12. Automatización v3.10.0 (cron, cola, TripAdvisor y embudo)
+## 12. Automatización v3.11.0 (cron, cola, TripAdvisor y embudo)
 
 Todo funciona sin esto (en línea/manual), pero para vender con volumen configúralo.
 Detalle completo en [GUIA_AUTOMATIZACION.md](../GUIA_AUTOMATIZACION.md); aquí solo tu checklist:

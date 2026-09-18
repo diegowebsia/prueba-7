@@ -114,7 +114,7 @@ function loadPg(): PgModule | null {
   try {
     // `require` en runtime evita que el bundle de Next intente empaquetar `pg`
     // cuando la app corre en modo demo (sin DATABASE_URL).
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     pgModule = require('pg') as PgModule;
     return pgModule;
   } catch (e: any) {

@@ -37,6 +37,7 @@ import {
 import { syncGoogleBusinessForTenant, syncGooglePlacesForTenant } from '@/lib/google';
 import { syncTrustpilotForTenant } from '@/lib/trustpilot';
 import { syncTripadvisorForTenant } from '@/lib/tripadvisor';
+import { decryptCredentials } from '@/lib/credentials';
 
 /* ------------------------------------------------------------------ */
 /* Tipos de trabajo                                                    */
@@ -257,7 +258,7 @@ async function handleSyncProvider(
     .eq('tenant_id', job.tenantId)
     .eq('provider', job.provider === 'places' ? 'google' : job.provider)
     .single();
-  const creds = (integ?.credentials as any) ?? {};
+  const creds = decryptCredentials<any>(integ?.credentials);
   const ctx = { admin, tenantId: job.tenantId };
 
   const synced =

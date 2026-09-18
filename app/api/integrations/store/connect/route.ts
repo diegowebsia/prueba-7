@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requirePaidAccess } from '@/lib/usage';
+import { encryptCredentials } from '@/lib/credentials';
 import { env } from '@/lib/env';
 
 const Body = z.object({
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Proveedor o secreto inválidos (mín. 8 caracteres).' }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
 
   const { data: tenant } = await admin
     .from('tenants')
-    .select('plan, api_key')
+    .select('plan')
     .eq('id', parsed.data.tenantId)
     .single();
   if (planOf(tenant?.plan).id !== 'business') {
@@ -62,20 +63,21 @@ export async function POST(req: Request) {
     );
   }
 
-  await admin.from('integrations').upsert(
+  const { error: saveError } = await admin.from('integrations').upsert(
     {
       tenant_id: parsed.data.tenantId,
       provider: parsed.data.provider,
       status: 'connected',
-      credentials: { webhook_secret: parsed.data.webhook_secret },
+      credentials: encryptCredentials({ webhook_secret: parsed.data.webhook_secret }),
       external_label: parsed.data.provider === 'shopify' ? 'Shopify' : 'WooCommerce',
       last_error: null,
     },
     { onConflict: 'tenant_id,provider' },
   );
+  if (saveError) return NextResponse.json({ error: 'No se pudo guardar la integración.' }, { status: 500 });
 
   const base = env.appUrl.replace(/\/$/, '');
-  const webhookUrl = `${base}/api/integrations/${parsed.data.provider}/webhook?key=${tenant?.api_key ?? ''}`;
+  const webhookUrl = `${base}/api/integrations/${parsed.data.provider}/webhook?tenant=${encodeURIComponent(parsed.data.tenantId)}`;
   return NextResponse.json({
     ok: true,
     webhookUrl,

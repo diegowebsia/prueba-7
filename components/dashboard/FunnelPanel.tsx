@@ -15,7 +15,7 @@ import { Spinner } from '@/components/Skeleton';
 import type { TenantInfo } from '@/components/dashboard/types';
 
 /**
- * Embudo Privado de Satisfacción: enlace público /valorar/[slug],
+ * Flujo Neutral de Valoración: enlace público /valorar/[slug],
  * estadísticas (media, 1-5★, canales), tickets 1-3★ y ajustes de URLs.
  */
 export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boolean }) {
@@ -113,7 +113,7 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
             <Filter size={16} className="text-brand-300" /> Embudo de {t.name}
           </h3>
           <p className="mt-1 text-sm text-ink-400">
-            4-5★ salen a Google/TripAdvisor/Trustpilot · 1-3★ llegan como ticket privado (nunca público).
+            Todas las puntuaciones pueden ir a Google/TripAdvisor/Trustpilot · el ticket privado es opcional y adicional.
           </p>
         </div>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-300">
@@ -155,7 +155,7 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
             {[
               { label: 'Votos', value: String(stats.total), icon: <Star size={14} /> },
               { label: 'Nota media', value: stats.avgStars != null ? `${stats.avgStars}★` : '—', icon: <Star size={14} /> },
-              { label: 'A plataformas (4-5★)', value: String(stats.redirects), icon: <ExternalLink size={14} /> },
+              { label: 'A plataformas', value: String(stats.redirects), icon: <ExternalLink size={14} /> },
               { label: 'Tickets abiertos', value: String(stats.ticketsOpen), icon: <MessageSquareWarning size={14} /> },
             ].map((k) => (
               <div key={k.label} className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
@@ -188,7 +188,7 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
 
           {/* Canales */}
           <div>
-            <p className="mb-2 text-sm font-semibold text-white">Dónde valoran tus promotores (4-5★)</p>
+            <p className="mb-2 text-sm font-semibold text-white">Dónde continúan las valoraciones</p>
             <div className="flex flex-wrap gap-2 text-sm">
               {[
                 ['Google', stats.byChannel?.google ?? 0],
@@ -235,7 +235,7 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
         </p>
       </div>
 
-      {/* Tickets 1-3★ */}
+      {/* Tickets privados opcionales */}
       {!demo && tickets.length > 0 && (
         <div>
           <p className="mb-2 text-sm font-semibold text-white">

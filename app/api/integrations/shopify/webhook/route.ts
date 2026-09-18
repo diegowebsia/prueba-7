@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { tenantByApiKey, verifyShopifyHmac } from '@/lib/store';
+import { verifyShopifyHmac } from '@/lib/store';
 import { enqueue } from '@/lib/queue';
 import { systemLog } from '@/lib/logger';
+import { decryptCredentials } from '@/lib/credentials';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Webhook REAL de Shopify: pega esta URL en
  * Settings → Notifications → Webhooks → Evento `Fulfillment events`.
- * URL: /api/integrations/shopify/webhook?key=TU_API_KEY
+ * URL: /api/integrations/shopify/webhook?tenant=TU_TENANT_ID
  *
  * El pedido se ENCOLA (`store.delivered`) y se responde 200 al instante:
  * el envío del WhatsApp (con opt-in RGPD, cuota y plantilla HSM) lo
@@ -19,8 +20,10 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
   if (!admin) return NextResponse.json({ error: 'Supabase no configurado.' }, { status: 503 });
 
-  const key = new URL(req.url).searchParams.get('key');
-  const tenant = await tenantByApiKey(admin, key);
+  const tenantId = new URL(req.url).searchParams.get('tenant');
+  if (!tenantId) return NextResponse.json({ error: 'Tienda desconocida.' }, { status: 404 });
+  const { data: tenant } = await admin.from('tenants')
+    .select('id, name, slug, plan, subscription_status, suspended, settings').eq('id', tenantId).single();
   if (!tenant) return NextResponse.json({ error: 'Tienda desconocida.' }, { status: 404 });
 
   const { data: integ } = await admin
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
     .eq('tenant_id', tenant.id)
     .eq('provider', 'shopify')
     .single();
-  const secret = (integ?.credentials as any)?.webhook_secret as string | undefined;
+  const secret = decryptCredentials<{ webhook_secret?: string }>(integ?.credentials).webhook_secret;
 
   const raw = await req.text();
   if (!verifyShopifyHmac(raw, secret ?? '', req.headers.get('x-shopify-hmac-sha256'))) {

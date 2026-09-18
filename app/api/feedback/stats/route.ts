@@ -5,14 +5,14 @@ import { createAdminClient } from '@/lib/supabase/admin';
 export const dynamic = 'force-dynamic';
 
 /**
- * Estadísticas del Embudo Privado para el panel (requiere membresía):
+ * Estadísticas del Flujo Neutral de Valoración para el panel (requiere membresía):
  * totales, media, reparto 1-5★, canales elegidos y tickets abiertos.
  */
 export async function GET(req: Request) {
   const tenantId = new URL(req.url).searchParams.get('tenantId') ?? '';
   if (!tenantId) return NextResponse.json({ error: 'Falta tenantId.' }, { status: 400 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

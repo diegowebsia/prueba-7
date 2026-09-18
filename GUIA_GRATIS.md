@@ -1,4 +1,4 @@
-# 🆓 GUIA_GRATIS — ReviewFlow AI a 0 € (v3.10.0)
+# 🆓 GUIA_GRATIS — ReviewFlow AI a 0 € (v3.11.0)
 
 Dos cosas en un solo documento:
 
@@ -28,7 +28,7 @@ Dos cosas en un solo documento:
 | **Alertas y peticiones por WhatsApp** | ✅ | ✅ |
 | **Trustpilot** | ✅ | ✅ |
 | **TripAdvisor** | ✅ | ✅ |
-| **Embudo privado `/valorar` (4-5★ a plataformas, 1-3★ a ticket)** | ✅ | ✅ |
+| **Embudo privado `/valorar` (plataformas para todos + ticket privado opcional)** | ✅ | ✅ |
 | **Tienda (Shopify / Woo / TPV) + WhatsApp al entregar** | ❌ | ✅ |
 | **Soporte** | Email | Prioritario |
 | **Prueba** | 7 días gratis con tarjeta | 7 días gratis con tarjeta |
@@ -75,13 +75,12 @@ Dos cosas en un solo documento:
    - ¿Ya tenías la BD de una versión anterior? Ejecuta en orden las migraciones
      `migration_3_2_0.sql` → `migration_3_3_0.sql` → `migration_3_4_0.sql` →
      `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` →
-     `migration_3_8_0.sql` → `migration_3_9_0.sql` → **`migration_3_10_0.sql`**
-     (todas idempotentes; la última añade TripAdvisor, opt-ins de WhatsApp,
-     Embudo Privado y `job_id` de IA asíncrona).
+     `migration_3_8_0.sql` → `migration_3_9_0.sql` → `migration_3_10_0.sql` → **`migration_3_11_0.sql`**
+     (todas idempotentes; 3.11 añade idempotencia, rate limits, hardening RLS y ledger multipack).
 
 4. **Opcional pero útil**: *Project Settings → Database → Connection pooling* → copia la cadena
    del puerto **6543** → `DATABASE_URL`. Con ella el panel interno muestra latencia, conexiones y
-   tamaño real por tabla (`/api/health?db=1`). Sin ella, todo sigue funcionando.
+   tamaño real por tabla (`/api/admin/db`). Sin ella, todo sigue funcionando.
 
 ## Paso 3 — IA en modo gratis (2 min, opcional)
 
@@ -138,7 +137,7 @@ Dos cosas en un solo documento:
 
 ## Paso 8 — Prueba el flujo completo E2E (5 min)
 
-1. `npm run verify` (o `/api/health?verbose=1`) → `"ok":true`, `version:"3.10.0"` e integraciones en `true`.
+1. `npm run verify` y `GET /api/health?mode=live` → `"ok":true`; el readiness requiere Bearer `HEALTHCHECK_SECRET`.
 2. **Regístrate** → en `/bienvenido` verás los 2 planes de pago:
    - **Pro/Business** → checkout de prueba con `4242 4242 4242 4242` (7 días sin cargo).
 3. En el panel: ajusta el tono de la IA, genera un borrador y publícalo. La respuesta trae los
@@ -172,7 +171,7 @@ Dos cosas en un solo documento:
 | 2 planes de pago + cuotas + recargas | ✅ idéntico a producción (Stripe test) |
 | IA medida por tokens | ✅ presupuesto real por plan (con clave de OpenAI o con plantilla local) |
 | Webhook de Stripe | ✅ mismo endpoint firmado que en live (`npm run verify` lo comprueba) |
-| PostgreSQL + RLS + índices | ✅ Supabase Free (500 MB) con migración 3.10.0 |
+| PostgreSQL + RLS + índices | ✅ Supabase Free (500 MB) con migración 3.11.0 |
 | Protección de datos | ✅ topes por tabla, purga automática y fallbacks |
 | Coste total | **0 €** hasta que decidas vender |
 

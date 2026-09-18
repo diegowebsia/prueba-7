@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * ReviewFlow AI — Catálogo comercial de planes (v3.10.0)
+ * ReviewFlow AI — Catálogo comercial de planes (v3.11.0)
  * ============================================================
  * 100% client-safe: este fichero NO importa nada de Node ni de Supabase,
  * por lo que puede usarse en la landing, el dashboard y el servidor.
@@ -120,7 +120,7 @@ export type PlanFeatures = {
   trustpilot: boolean;
   /** Sincronización de TripAdvisor (vía SerpAPI/Outscraper). */
   tripadvisor: boolean;
-  /** Embudo Privado de Satisfacción (/valorar/[slug]). */
+  /** Flujo Neutral de Valoración (/valorar/[slug]). */
   feedbackFunnel: boolean;
   /** Borradores de respuesta con IA (OpenAI o plantilla local). */
   aiReplies: boolean;

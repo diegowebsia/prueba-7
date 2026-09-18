@@ -1,5 +1,5 @@
 # ============================================================
-# ReviewFlow AI v3.4.0 — Despliegue con 1 comando en CUALQUIER servidor
+# ReviewFlow AI v3.11.0 — Despliegue con 1 comando en CUALQUIER servidor
 # Uso:
 #   cp .env.example .env    # 1) pega tus claves reales
 #   docker compose up -d --build   # 2) lanzar
@@ -11,6 +11,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?required}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?required}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?required}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:?required}
+        NEXT_PUBLIC_COMPANY_NAME: ${NEXT_PUBLIC_COMPANY_NAME:-}
+        NEXT_PUBLIC_CIF: ${NEXT_PUBLIC_CIF:-}
+        NEXT_PUBLIC_ADDRESS: ${NEXT_PUBLIC_ADDRESS:-}
+        NEXT_PUBLIC_LEGAL_EMAIL: ${NEXT_PUBLIC_LEGAL_EMAIL:-}
+        NEXT_PUBLIC_SUPPORT_EMAIL: ${NEXT_PUBLIC_SUPPORT_EMAIL:-}
+        NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_DOMAIN:-}
+        NEXT_PUBLIC_PLAUSIBLE_DOMAIN: ${NEXT_PUBLIC_PLAUSIBLE_DOMAIN:-}
     image: reviewflow-ai:3.4.0
     container_name: reviewflow-ai
     restart: unless-stopped
@@ -22,7 +34,7 @@ services:
     ports:
       - "3000:3000"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      test: ["CMD-SHELL", "wget -qO- --header=\"Authorization: Bearer $$HEALTHCHECK_SECRET\" 'http://127.0.0.1:3000/api/health?mode=ready' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

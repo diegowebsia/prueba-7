@@ -88,7 +88,7 @@ async function memberGate(
   | { ok: true; admin: NonNullable<ReturnType<typeof createAdminClient>> }
   | { ok: false; status: number; error: string }
 > {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

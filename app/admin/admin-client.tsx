@@ -164,8 +164,16 @@ export function AdminClient({ email, demo, tenants, stats, logs, integrations }:
     const used = tenants.reduce((a, t) => a + (t.used_events ?? 0), 0);
     const capped = tenants.filter((t) => (t.used_events ?? 0) >= quotaOf(t)).length;
     return { extras, used, capped };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [tenants]);
+
+  async function impersonate(tenantId: string) {
+    const reason = window.prompt('Motivo detallado del acceso de soporte (mín. 10 caracteres):')?.trim();
+    if (!reason || reason.length < 10) return;
+    const ticket = window.prompt('ID del ticket o incidencia:')?.trim();
+    if (!ticket || ticket.length < 3) return;
+    await action('/api/admin/impersonate', { tenantId, reason, ticket }, `row-${tenantId}`, 'Sesión de soporte abierta');
+  }
 
   async function action(path: string, body: any, key: string, okTitle: string) {
     setBusy(key);
@@ -395,14 +403,7 @@ export function AdminClient({ email, demo, tenants, stats, logs, integrations }:
                                 title="Abrir el panel como esta empresa"
                                 className="btn-quiet btn-sm"
                                 disabled={!!busy}
-                                onClick={() =>
-                                  action(
-                                    '/api/admin/impersonate',
-                                    { tenantId: t.id },
-                                    `row-${t.id}`,
-                                    'Sesión de soporte abierta',
-                                  )
-                                }
+                                onClick={() => void impersonate(t.id)}
                               >
                                 {busyRow(`row-${t.id}`) ? <Spinner /> : <ExternalLink size={13} />} Acceder
                               </button>

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     await supabase.auth.signOut();
   } catch {
     /* sin supabase: nada que cerrar */

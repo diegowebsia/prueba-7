@@ -19,7 +19,7 @@ export async function PATCH(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Parámetros inválidos.' }, { status: 400 });
   const { tenantId, ...patch } = parsed.data;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

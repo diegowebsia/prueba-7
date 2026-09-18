@@ -1,46 +1,48 @@
 {
   "name": "reviewflow-ai",
-  "version": "3.10.0",
-  "description": "ReviewFlow AI v3.10.0 — SaaS multi-tenant de gestión y respuesta de opiniones con IA (gpt-4o-mini). 100% de pago, TripAdvisor, cron + cola QStash, plantillas WhatsApp HSM, opt-in RGPD y Embudo Privado de Satisfacción.",
+  "version": "3.11.0",
+  "description": "ReviewFlow AI v3.11.0 — SaaS multi-tenant de gestión y respuesta de opiniones con IA (gpt-4o-mini). 100% de pago, TripAdvisor, cron + cola QStash, plantillas WhatsApp HSM, opt-in RGPD y flujo neutral de valoración.",
   "private": true,
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
-    "lint": "next lint",
+    "start": "node .next/standalone/server.js",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "verify": "node scripts/verify-launch.mjs"
+    "verify": "node scripts/verify-launch.mjs",
+    "test": "node --test --import tsx tests/**/*.test.ts"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.4.1",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.44.4",
     "@upstash/qstash": "^2.11.3",
     "framer-motion": "^13.4.0",
     "lucide-react": "^0.424.0",
-    "next": "^14.2.35",
-    "nodemailer": "^6.9.14",
+    "next": "^16.3.5",
+    "nodemailer": "^10.0.10",
     "openai": "^4.56.0",
     "pg": "^8.23.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "stripe": "^16.9.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.14.10",
-    "@types/nodemailer": "^6.4.15",
+    "@types/node": "^24.13.5",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.19",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.5",
     "postcss": "^8.4.40",
     "tailwindcss": "^3.4.7",
+    "tsx": "^4.20.6",
     "typescript": "^5.5.3"
   }
 }

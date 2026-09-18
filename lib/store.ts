@@ -47,8 +47,8 @@ export type DeliveredOrder = {
 /**
  * Pedido entregado → WhatsApp automático al CLIENTE pidiendo valoración.
  * Requisitos: plan Business + suscripción con acceso + cuota + OPT-IN RGPD.
- * Descuenta 1 unidad. El enlace dirige al Embudo Privado (/valorar/[slug]):
- * 4-5★ salen a Google/TripAdvisor/Trustpilot y 1-3★ quedan como ticket.
+ * Descuenta 1 unidad. El enlace dirige al flujo neutral (/valorar/[slug]):
+ * todas las puntuaciones reciben las mismas opciones públicas; el soporte privado es adicional.
  * Fuera de la ventana de 24 h se envía con plantilla HSM aprobada.
  */
 export async function handleDeliveredOrder(
@@ -68,21 +68,6 @@ export async function handleDeliveredOrder(
       ok: false,
       status: featureGate.status,
       body: featureGate.body,
-    };
-  }
-  // 2) Cuota: 1 evento de WhatsApp por pedido entregado.
-  const quotaGate = await enforce(admin, tenant.id, {
-    metric: 'requests',
-    feature: 'whatsappOrders',
-    amount: 1,
-    action: 'WhatsApp post-venta',
-  });
-  if (!quotaGate.ok) {
-    return {
-      ok: false,
-      status: quotaGate.status,
-      body: quotaGate.body,
-      headers: quotaGate.headers,
     };
   }
   if (!order.customerPhone || normalizePhone(order.customerPhone).length < 9) {
@@ -115,21 +100,31 @@ export async function handleDeliveredOrder(
     return { ok: false, status: 200, body: { ok: true, skipped: 'no-optin' } };
   }
 
-  // Idempotencia: mismo pedido no se avisa dos veces (log por external_id).
+  // Reclamo atómico por tenant/proveedor/pedido. Ante un fallo recuperable se libera para el reintento.
   const marker = `order:${order.provider}:${order.orderId}`;
-  const { data: dup } = await admin
-    .from('system_logs')
-    .select('id')
-    .eq('source', 'store.review-request')
-    .eq('message', marker)
-    .limit(1);
-  if (dup && dup.length > 0) {
+  const { error: claimError } = await admin.from('processed_events').insert({
+    provider: order.provider,
+    tenant_scope: tenant.id,
+    event_id: order.orderId,
+  });
+  if (claimError?.code === '23505') {
     return { ok: true, status: 200, body: { ok: true, skipped: 'duplicate' } };
+  }
+  if (claimError) throw claimError;
+  const releaseClaim = () => admin.from('processed_events').delete()
+    .eq('provider', order.provider).eq('tenant_scope', tenant.id).eq('event_id', order.orderId);
+
+  const quotaGate = await enforce(admin, tenant.id, {
+    metric: 'requests', feature: 'whatsappOrders', amount: 1, action: 'WhatsApp post-venta',
+  });
+  if (!quotaGate.ok) {
+    await releaseClaim();
+    return { ok: false, status: quotaGate.status, body: quotaGate.body, headers: quotaGate.headers };
   }
 
   const base = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
   const placeId = tenant.settings?.place_id as string | undefined;
-  // El embudo clasifica 1-5★ y solo redirige 4-5★ a plataformas públicas.
+  // El embudo ofrece las mismas plataformas públicas con independencia de la puntuación.
   const link = tenant.slug
     ? `${base}/valorar/${tenant.slug}`
     : placeId
@@ -155,6 +150,7 @@ export async function handleDeliveredOrder(
     },
   );
   if (!sent.ok) {
+    await releaseClaim();
     await systemLog('warn', 'store.webhook', sent.error, { tenantId: tenant.id, code: sent.code });
     return {
       ok: false,

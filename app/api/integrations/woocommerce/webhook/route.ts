@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { tenantByApiKey, verifyWooHmac } from '@/lib/store';
+import { verifyWooHmac } from '@/lib/store';
 import { enqueue } from '@/lib/queue';
 import { systemLog } from '@/lib/logger';
+import { decryptCredentials } from '@/lib/credentials';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Webhook REAL de WooCommerce: WooCommerce → Settings → Advanced → Webhooks →
  * Add webhook (Topic: Order updated, Status: Active) con esta URL:
- * /api/integrations/woocommerce/webhook?key=TU_API_KEY
+ * /api/integrations/woocommerce/webhook?tenant=TU_TENANT_ID
  *
  * El pedido se ENCOLA (`store.delivered`) y se responde 200 al instante
  * (worker en segundo plano; en línea sin QStash).
@@ -18,8 +19,10 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
   if (!admin) return NextResponse.json({ error: 'Supabase no configurado.' }, { status: 503 });
 
-  const key = new URL(req.url).searchParams.get('key');
-  const tenant = await tenantByApiKey(admin, key);
+  const tenantId = new URL(req.url).searchParams.get('tenant');
+  if (!tenantId) return NextResponse.json({ error: 'Tienda desconocida.' }, { status: 404 });
+  const { data: tenant } = await admin.from('tenants')
+    .select('id, name, slug, plan, subscription_status, suspended, settings').eq('id', tenantId).single();
   if (!tenant) return NextResponse.json({ error: 'Tienda desconocida.' }, { status: 404 });
 
   const { data: integ } = await admin
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
     .eq('tenant_id', tenant.id)
     .eq('provider', 'woocommerce')
     .single();
-  const secret = (integ?.credentials as any)?.webhook_secret as string | undefined;
+  const secret = decryptCredentials<{ webhook_secret?: string }>(integ?.credentials).webhook_secret;
 
   const raw = await req.text();
   if (!verifyWooHmac(raw, secret ?? '', req.headers.get('x-wc-webhook-signature'))) {

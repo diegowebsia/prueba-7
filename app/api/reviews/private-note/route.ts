@@ -18,7 +18,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ ok: true, demo: true });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

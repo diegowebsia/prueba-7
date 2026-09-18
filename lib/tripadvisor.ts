@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from '@/lib/http';
 /**
  * TripAdvisor (reseñas reales de tu ficha).
  * TripAdvisor no ofrece API pública de reseñas, así que la integración pasa
@@ -53,7 +54,7 @@ async function fetchViaSerpApi(apiKey: string, locationId: string): Promise<Trip
     location_id: locationId,
     api_key: apiKey,
   });
-  const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`, {
+  const res = await fetchWithTimeout(`https://serpapi.com/search.json?${params.toString()}`, {
     headers: { Accept: 'application/json' },
   });
   if (!res.ok) {
@@ -82,7 +83,7 @@ async function fetchViaSerpApi(apiKey: string, locationId: string): Promise<Trip
  */
 async function fetchViaOutscraper(apiKey: string, locationId: string): Promise<TripadvisorReview[]> {
   const headers = { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' };
-  const create = await fetch('https://api.app.outscraper.com/requests', {
+  const create = await fetchWithTimeout('https://api.app.outscraper.com/requests', {
     method: 'POST',
     headers,
     body: JSON.stringify({ service: 'tripadvisor-reviews', location_id: locationId, limit: 100 }),
@@ -96,7 +97,7 @@ async function fetchViaOutscraper(apiKey: string, locationId: string): Promise<T
   // Espera limitada: 5 intentos × 4 s (la cola reintenta el job si expira).
   for (let i = 0; i < 5; i++) {
     await new Promise((r) => setTimeout(r, 4000));
-    const poll = await fetch(`https://api.app.outscraper.com/requests/${encodeURIComponent(taskId)}`, { headers });
+    const poll = await fetchWithTimeout(`https://api.app.outscraper.com/requests/${encodeURIComponent(taskId)}`, { headers });
     if (!poll.ok) continue;
     const state: any = await poll.json().catch(() => ({}));
     if (state?.status !== 'Success' && state?.status !== 'Completed') continue;

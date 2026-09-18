@@ -1,4 +1,4 @@
-# ⭐ ReviewFlow AI v3.10.0
+# ⭐ ReviewFlow AI v3.11.0
 
 **Plataforma SaaS multi-tenant para centralizar opiniones reales (Google · Trustpilot · Tiendas),
 responderlas con IA, pedirlas por email/WhatsApp y cobrar por uso medible.**
@@ -9,7 +9,7 @@ responderlas con IA, pedirlas por email/WhatsApp y cobrar por uso medible.**
   Cada plan tiene su **presupuesto de tokens** (250.000 / 1.200.000 al mes): la IA nunca
   puede generar una factura sorpresa.
 - ✅ **2 planes 100 % de pago y nada más**: **Pro (29 €)** y **Business (79 €)**, ambos con **7 días de prueba gratis** con tarjeta. Sin suscripción activa (o con la prueba caducada), panel y APIs responden **402**.
-- ✅ **Automatización total**: cron horario + cola QStash (entregas, IAs, WhatsApps y syncs en segundo plano), plantillas WhatsApp HSM, opt-in RGPD y Embudo Privado `/valorar/[slug]` (4-5★ a plataformas, 1-3★ a ticket).
+- ✅ **Automatización total**: cron horario + cola QStash (entregas, IAs, WhatsApps y syncs en segundo plano), plantillas WhatsApp HSM, opt-in RGPD y Flujo Neutral `/valorar/[slug]` (plataformas para todos + ticket privado opcional).
   Cada plan define 4 cuotas mensuales claras (peticiones, opiniones, IA, sincronizaciones) y
   **topes de base de datos** por empresa (opiniones guardadas, auditoría, conexiones, MB).
 - ✅ **Cuotas reales aplicadas en servidor**: cada petición enviada, opinión importada, respuesta
@@ -87,7 +87,7 @@ POST /api/ai
 | **[GUIA_ADMIN.md](./GUIA_ADMIN.md)** 🛡️ | Manual del dueño: planes, cuotas, **topes de BD por plan**, purga, cobros y operación diaria | — |
 | **[docs/GUIA_PASOS_MANUALES.md](./docs/GUIA_PASOS_MANUALES.md)** 🧑‍💻 | **Lista exacta de credenciales**, formato del `.env`, productos de Stripe, Supabase, OpenAI, Meta WhatsApp, Google y troubleshooting | — |
 | **[GUIA_COMERCIALIZACION.md](./GUIA_COMERCIALIZACION.md)** 💰 | **Todo lo que TÚ debes aportar para vender al público**: empresa, dominio, Stripe live, SMTP, marca, integraciones en producción, legal RGPD/consumo, seguridad, soporte y checklist go-live | — |
-| **[GUIA_AUTOMATIZACION.md](./GUIA_AUTOMATIZACION.md)** ⚙️ | Cron + QStash + plantillas HSM + opt-in RGPD + Embudo Privado: qué configurar y dónde | — |
+| **[GUIA_AUTOMATIZACION.md](./GUIA_AUTOMATIZACION.md)** ⚙️ | Cron + QStash + plantillas HSM + opt-in RGPD + Flujo Neutral: qué configurar y dónde | — |
 
 > 💡 Para el cliente: la ayuda de día a día está **dentro del panel** (botón «Ayuda»): FAQs
 > desplegables condensadas. Las guías extensas viven en `docs/`, fuera de la vista principal.
@@ -209,8 +209,9 @@ Registro → /bienvenido (2 planes de pago)
 | `lib/queue.ts` + `/api/queue/worker` | Cola QStash (fallback inline): `store.delivered`, `whatsapp.send`, `sync.provider`, `ai.generate`, `notify.owner`, con reintentos y control de caudal. |
 | `/api/cron/sync-reviews` + `vercel.json` | Cron horario (Business 1 h / Pro 6 h) que encola syncs de Google/Places/Trustpilot/TripAdvisor. Alternativa pg_cron documentada. |
 | `lib/optin.ts` + `whatsapp_optins` | Opt-in RGPD: sin consentimiento vigente no sale WhatsApp al cliente (registro en checkout, baja por STOP). |
-| `/valorar/[slug]` + `/api/feedback/*` | Embudo Privado 1-5★: 4-5★ a plataformas públicas (clic medido), 1-3★ a ticket privado con aviso al dueño. |
+| `/valorar/[slug]` + `/api/feedback/*` | Flujo Neutral 1-5★: plataformas públicas para todas las puntuaciones (clic medido) y soporte privado opcional. |
 | `supabase/migration_3_10_0.sql` | Fuente `tripadvisor` (+fix `places`), proveedor `tripadvisor`, `ai_interactions.job_id`, tablas `whatsapp_optins`, `whatsapp_contacts`, `feedback_responses` + RLS. |
+| `supabase/migration_3_11_0.sql` | Estados Stripe, idempotencia, rate limits, ledger multipack, auditoría inmutable y hardening RLS. |
 | `middleware.ts` | Corta `/dashboard` sin acceso (→ `/bienvenido?reason=`), `/admin` sin `SUPERADMIN_EMAILS` y las APIs `/api/ai|reviews|integrations` sin suscripción (**402**). |
 
 ### Endpoints con control de cuota
@@ -228,13 +229,14 @@ Registro → /bienvenido (2 planes de pago)
 | `POST /api/ai` | 1 crédito `ai` + tokens (task `reply` \| `triage`) | 401/402/403/429/507 |
 | `GET /api/ai` | — | Estado del motor de IA (super-admin) |
 | `GET /api/tenants/usage` | — | Snapshot de cuota + tokens de IA + topes para el panel |
-| `GET /api/health` | — | Estado de integraciones (`?verbose=1`, `?db=1`) |
+| `GET /api/health?mode=live` | — | Liveness público mínimo |
+| `GET /api/health?mode=ready` | Bearer `HEALTHCHECK_SECRET` | Readiness privado de configuración y BD |
 | `GET /api/admin/db` | — | Diagnóstico de BD: pool, latencia, conexiones, tamaño por tabla (super-admin) |
 | `GET /api/stripe/webhook` | — | Diagnóstico del webhook: modo, eventos, precios (super-admin) |
 
 ---
 
-## 🎨 Sistema de diseño v3.10.0
+## 🎨 Sistema de diseño v3.11.0
 
 - **Fondo** `#090D16` (`ink-950`) con escala propia `ink-50…950`, acento `brand` (azul #2563eb →
   #5f92fb) y violeta de apoyo; nunca negro puro ni blanco puro.
@@ -275,7 +277,7 @@ Registro → /bienvenido (2 planes de pago)
 | 📧 SMTP + contacto | ✅ | Proveedor agnóstico + formulario `/contacto` funcional |
 | ⚖️ Legal UE/RGPD | ✅ | 4 páginas + banner granular + términos con cuotas, recargas y cortes |
 | 🌍 Multi-host | ✅ | Auto-detecta Vercel; `Dockerfile` + `docker-compose` para el resto |
-| ❤️ Health-check | ✅ | `GET /api/health` con el estado de todas las integraciones |
+| ❤️ Health-check | ✅ | liveness mínimo y readiness privado autenticado |
 | 🧪 Modo demo sin claves | ✅ | La app **arranca aunque falten claves** y explica qué configurar |
 
 ---
@@ -302,7 +304,7 @@ Registro → /bienvenido (2 planes de pago)
 ├── lib/                 plans · usage · openai · db · ingest · stripe · ai · google ·
 │                        trustpilot · whatsapp · store · maps · mail · auth · env · logger ·
 │                        demo · site
-├── supabase/            schema.sql + migration_3_2_0 … migration_3_10_0.sql
+├── supabase/            schema.sql + migration_3_2_0 … migration_3_11_0.sql
 ├── scripts/             verify-launch.mjs (npm run verify)
 ├── docs/                GUIA_PASOS_MANUALES.md (manual de credenciales, fuera del cliente)
 ├── public/              logo.svg · favicon.svg

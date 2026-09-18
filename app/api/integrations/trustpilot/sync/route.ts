@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { ingestReviews } from '@/lib/ingest';
 import { checkQuota, publicQuota } from '@/lib/usage';
 import { systemLog } from '@/lib/logger';
+import { decryptCredentials } from '@/lib/credentials';
 
 const Body = z.object({ tenantId: z.string().min(1) });
 
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Falta tenantId.' }, { status: 400 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
     .eq('tenant_id', tenantId)
     .eq('provider', 'trustpilot')
     .single();
-  const creds = (integ?.credentials as any) ?? {};
+  const creds = decryptCredentials<any>(integ?.credentials);
   if (!creds.apiKey || !creds.businessUnitId) {
     return NextResponse.json({ error: 'Trustpilot no configurado. Guarda tu API key primero.' }, { status: 400 });
   }

@@ -12,7 +12,7 @@ export type Authz = AuthzOk | AuthzFail;
  * Usar en todas las rutas que operen sobre un tenantId.
  */
 export async function requireOwner(admin: AdminLike, tenantId: string): Promise<Authz> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

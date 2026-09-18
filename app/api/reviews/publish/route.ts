@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { publishGoogleReplyForTenant } from '@/lib/google';
 import { requirePaidAccess } from '@/lib/usage';
 import { systemLog } from '@/lib/logger';
+import { decryptCredentials } from '@/lib/credentials';
 
 const Body = z.object({
   reviewId: z.string().min(1),
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, demo: true, message: 'Modo demo: respuesta no persistida.' });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
         .eq('tenant_id', review.tenant_id)
         .eq('provider', 'google')
         .single();
-      const creds = (integ?.credentials as any) ?? {};
+      const creds = decryptCredentials<any>(integ?.credentials);
       if (creds.refresh_token || creds.access_token) {
         const published = await publishGoogleReplyForTenant(
           { admin, tenantId: String(review.tenant_id) },

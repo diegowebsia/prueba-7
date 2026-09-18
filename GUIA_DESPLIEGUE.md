@@ -1,4 +1,4 @@
-# 🚀 GUIA_DESPLIEGUE.md — ReviewFlow AI v3.10.0
+# 🚀 GUIA_DESPLIEGUE.md — ReviewFlow AI v3.11.0
 
 Despliegue en **producción comercial desde cero**, paso a paso, en el host que elijas.
 Al final tendrás `https://tudominio.com` cobrando con Stripe en modo live.
@@ -44,11 +44,11 @@ Tiempo estimado: **~40 minutos**.
 ## 2. Supabase: base de datos + auth (20 min)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) (región **West EU / Frankfurt** si tus clientes son españoles).
-2. **SQL Editor** → pega el contenido de `supabase/schema.sql` → **Run**. (Si ya tenías datos de una versión anterior, ejecuta en orden `migration_3_4_0.sql` → `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` → `migration_3_9_0.sql` → **`migration_3_10_0.sql`** — la última añade TripAdvisor, opt-ins, embudo y `job_id` de IA async.)
+2. **SQL Editor** → pega el contenido de `supabase/schema.sql` → **Run**. (Si ya tenías datos de una versión anterior, ejecuta en orden `migration_3_4_0.sql` → `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` → `migration_3_9_0.sql` → `migration_3_10_0.sql` → **`migration_3_11_0.sql`** — 3.10 añade TripAdvisor/opt-ins/IA async y 3.11 aplica el endurecimiento de seguridad.)
 3. **Authentication → Providers → Email**: activado (magic link desactivado, contraseña activada).
 4. **Authentication → URL Configuration** → Site URL = `https://tudominio.com` (+ añade la URL a Redirect URLs).
 5. **Project Settings → API**: copia `URL`, `anon public` y `service_role` → irán al `.env` del paso 6.
-6. **Connection Pooler (recomendado)**: **Settings → Database → Connection string → Connection pooling** → copia la cadena del **puerto 6543** (Supavisor, modo *transaction*) como `DATABASE_URL`. Es la conexión que aguanta los picos de tráfico comercial (diagnóstico, mantenimiento y analítica; el CRUD sigue por PostgREST con RLS). Compruébalo en `GET /api/health?db=1` (`mode: "transaction"`, latencia en ms).
+6. **Connection Pooler (recomendado)**: **Settings → Database → Connection string → Connection pooling** → copia la cadena del **puerto 6543** (Supavisor, modo *transaction*) como `DATABASE_URL`. Es la conexión que aguanta los picos de tráfico comercial (diagnóstico, mantenimiento y analítica; el CRUD sigue por PostgREST con RLS). Compruébalo en `GET /api/admin/db` (`mode: "transaction"`, latencia en ms).
 
 ---
 
@@ -166,14 +166,14 @@ npm install && npm run build && npm run start   # $PORT, ideal con pm2
 Marca cada punto antes de vender:
 
 - [ ] Comprobación automática: `npm run verify -- --url https://tudominio.com` (health · IA · pool Postgres · precios Stripe · firma del webhook · rutas de IA sin sesión → 401).
-- [ ] `https://tudominio.com` carga y `/api/health?verbose=1` responde `{"ok":true,"version":"3.10.0",...}`.
+- [ ] `https://tudominio.com` carga y `/api/health?mode=live` responde `{"ok":true,...}`; readiness privado devuelve 200 con Bearer `HEALTHCHECK_SECRET`.
 - [ ] `/registro` crea una cuenta y `/bienvenido` muestra los dos planes.
 - [ ] Checkout Stripe live abre el trial de 7 días (tarjeta).
 - [ ] Tras pagar, el webhook crea el tenant: visible en `/admin` (entra con tu email de `SUPERADMIN_EMAILS`).
 - [ ] `/dashboard` muestra la empresa, el consumo del ciclo, los topes de BD del plan y el selector de recargas (`?tab=facturacion`).
 - [ ] Conexión Google (OAuth) importa reseñas; WhatsApp de prueba llega al móvil.
 - [ ] Email de contacto (`/contacto`) llega a tu bandeja (revisa spam la primera vez).
-- [ ] Embudo: `/valorar/TU-SLUG` muestra la encuesta; 4-5★ redirige a plataformas, 1-3★ crea ticket + aviso.
+- [ ] Embudo: `/valorar/TU-SLUG` muestra la encuesta; todas las puntuaciones muestran plataformas; el ticket privado es opcional y adicional.
 - [ ] Cancelar la suscripción en Stripe → el acceso al dashboard se corta (paywall en `/bienvenido`).
 
 ---

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ============================================================
- * ReviewFlow AI — Verificación de lanzamiento (v3.8.0)
+ * ReviewFlow AI — Verificación de lanzamiento (v3.11.0)
  * ============================================================
  * Comprueba, contra tu propia app desplegada, que lo comercial está listo
  * ANTES de vender. No necesita claves de Stripe: usa el `whsec_` de tu .env
@@ -96,25 +96,42 @@ async function getJson(url, init) {
 /* ------------------------------- pruebas ------------------------------ */
 
 async function checkHealth() {
-  title('1. Estado general (/api/health)');
-  const { status, body } = await getJson(`${BASE}/api/health?verbose=1`);
-  if (status !== 200 || !body?.ok) {
-    bad('La app no responde en /api/health', `status ${status}`);
+  title('1. Liveness y readiness');
+  const live = await getJson(`${BASE}/api/health?mode=live`);
+  if (live.status !== 200 || !live.body?.ok) {
+    bad('La app no responde en liveness', `status ${live.status}`);
     return null;
   }
-  ok('La app responde', `v${body.version}`);
+  ok('Liveness público mínimo', `v${live.body.version}`);
 
-  const integ = body.integrations ?? {};
-  const required = ['supabase', 'supabaseAdmin', 'stripe', 'stripeWebhook', 'stripePrices'];
-  for (const key of required) {
-    if (integ[key]) ok(`Integración lista: ${key}`);
-    else soft(`Falta configuración: ${key}`, 'revisa .env');
+  if (env.HEALTHCHECK_SECRET) {
+    const ready = await getJson(`${BASE}/api/health?mode=ready`, {
+      headers: { Authorization: `Bearer ${env.HEALTHCHECK_SECRET}` },
+    });
+    if (ready.status === 200 && ready.body?.ok) ok('Readiness privado: configuración y BD listas');
+    else bad('Readiness no superado', `HTTP ${ready.status}`);
+  } else {
+    soft('Readiness no comprobado', 'falta HEALTHCHECK_SECRET en el entorno local');
   }
-  for (const key of ['openai', 'smtp', 'googleBusiness', 'googlePlaces', 'whatsapp', 'database']) {
-    if (integ[key]) ok(`Opcional activo: ${key}`);
-    else soft(`Opcional sin configurar: ${key}`);
-  }
-  return body;
+
+  return {
+    integrations: {
+      supabase: Boolean(env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      supabaseAdmin: Boolean(env.SUPABASE_SERVICE_ROLE_KEY),
+      stripe: Boolean(env.STRIPE_SECRET_KEY),
+      stripeWebhook: Boolean(env.STRIPE_WEBHOOK_SECRET),
+      stripePrices: Boolean(env.STRIPE_PRICE_PRO && env.STRIPE_PRICE_BUSINESS),
+      database: Boolean(env.DATABASE_URL),
+    },
+    ai: {
+      configured: Boolean(env.OPENAI_API_KEY), model: env.OPENAI_MODEL || 'gpt-4o-mini',
+      runtime: {
+        maxConcurrency: env.OPENAI_MAX_CONCURRENCY || '6',
+        rpmPerTenant: env.OPENAI_RPM_PER_TENANT || '20',
+        maxAttempts: env.OPENAI_MAX_ATTEMPTS || '3',
+      },
+    },
+  };
 }
 
 async function checkAi(health) {
@@ -139,31 +156,11 @@ async function checkAi(health) {
 async function checkDatabase(health) {
   title('3. PostgreSQL / pool de conexiones');
   if (!health?.integrations?.database) {
-    soft('DATABASE_URL no configurada', 'la app funciona con PostgREST; añádela para diagnóstico y mantenimiento');
+    soft('DATABASE_URL no configurada', 'la app funciona con PostgREST; añádela para mantenimiento');
     return;
   }
-  const { status, body } = await getJson(`${BASE}/api/health?db=1`);
-  const db = body?.database;
-  if (status !== 200 || !db) {
-    bad('No se pudo leer el estado de la BD');
-    return;
-  }
-  if (db.ok) ok('Conexión al pool correcta', `${db.latencyMs} ms · modo ${db.mode}`);
-  else bad('El pool no responde', db.error ?? 'revisa DATABASE_URL');
-
-  if (db.warning) soft('Aviso de configuración', db.warning);
-  if (db.server?.activeConnections != null) {
-    const pct = db.server.maxConnections
-      ? Math.round((db.server.activeConnections / db.server.maxConnections) * 100)
-      : null;
-    if (pct != null && pct > 70) soft('Muchas conexiones activas', `${db.server.activeConnections}/${db.server.maxConnections} (${pct} %)`);
-    else ok('Conexiones activas', `${db.server.activeConnections}/${db.server.maxConnections ?? '?'}`);
-  }
-  if (db.server?.databaseSizeMb != null) {
-    const size = db.server.databaseSizeMb;
-    if (size > 400) soft('La base de datos crece', `${size} MB (plan Free de Supabase: 500 MB)`);
-    else ok('Tamaño de la base de datos', `${size} MB`);
-  }
+  ok('DATABASE_URL presente');
+  soft('Detalle del pool protegido', 'compruébalo con sesión super-admin en GET /api/admin/db');
 }
 
 async function checkStripeConfig(health) {
@@ -257,7 +254,7 @@ async function checkAiEndpointGuards() {
   if (expected.includes(noSession.status)) {
     ok('Sin sesión no se ejecuta IA', `HTTP ${noSession.status}`);
   } else {
-    bad('La ruta de IA respondió sin sesión', `HTTP ${noSession.status}: revisa middleware.ts`);
+    bad('La ruta de IA respondió sin sesión', `HTTP ${noSession.status}: revisa proxy.ts`);
   }
 
   const badBody = await fetch(`${BASE}/api/ai`, {
@@ -265,8 +262,8 @@ async function checkAiEndpointGuards() {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ task: 'reply' }),
   });
-  if ([400, 401, 503].includes(badBody.status)) ok('Validación de entrada activa', `HTTP ${badBody.status}`);
-  else soft('Validación de entrada inesperada', `HTTP ${badBody.status}`);
+  if (badBody.status === 400) ok('Zod rechaza el cuerpo inválido', 'HTTP 400');
+  else soft('Zod no comprobable sin sesión', `HTTP ${badBody.status}; prueba de integración autenticada pendiente`);
 }
 
 /* -------------------------------- main -------------------------------- */

@@ -10,8 +10,8 @@
  *     Se puede cambiar con `OPENAI_MODEL` sin tocar código.
  *   · TIMEOUT por petición (`OPENAI_TIMEOUT_MS`, 20 s por defecto).
  *   · RATE LIMIT por empresa (`OPENAI_RPM_PER_TENANT`, 20 rpm por defecto):
- *     ventana deslizante en memoria del proceso; la cuota REAL y persistente
- *     la aplica `lib/usage.ts` contra PostgreSQL.
+ *     ventana distribuida en PostgreSQL; la cuota real y persistente también
+ *     la aplica `lib/usage.ts`.
  *   · CONCURRENCIA máxima global (`OPENAI_MAX_CONCURRENCY`, 6 por defecto)
  *     para no disparar cientos de peticiones simultáneas en un pico.
  *   · REINTENTOS con backoff exponencial + jitter ante 429/5xx/timeouts,
@@ -24,6 +24,7 @@
  *     `usage_counters.ai_tokens_*`) con `recordAiUsage()`.
  */
 
+import { consumeRateLimit } from '@/lib/rate-limit';
 import OpenAI from 'openai';
 import { env, isOpenAIConfigured } from '@/lib/env';
 import {
@@ -118,49 +119,22 @@ function getOpenAIClient(): OpenAI | null {
 /* Rate limit por empresa + concurrencia global                        */
 /* ------------------------------------------------------------------ */
 
-type Window = { hits: number[] };
-const windows = new Map<string, Window>();
 let inFlight = 0;
-
-/** Limpia ventanas antiguas para que el mapa no crezca sin límite. */
-function sweep(now: number) {
-  if (windows.size < 500) return;
-  for (const [key, w] of Array.from(windows.entries())) {
-    const last = w.hits[w.hits.length - 1] ?? 0;
-    if (w.hits.length === 0 || now - last > 60_000) windows.delete(key);
-  }
-}
 
 export type RateVerdict = {
   allowed: boolean;
-  /** Peticiones restantes en la ventana actual. */
   remaining: number;
-  /** Segundos a esperar antes de reintentar (solo si `allowed === false`). */
   retryAfterSeconds: number;
 };
 
-/**
- * Ventana deslizante de 60 s por empresa. Es una protección POR PROCESO
- * (suficiente para un VPS/Docker; en serverless multi-instancia la cuota
- * persistente de `lib/usage.ts` sigue siendo la que manda).
- */
-function checkTenantRateLimit(tenantId: string): RateVerdict {
-  const now = Date.now();
-  sweep(now);
-  const w = windows.get(tenantId) ?? { hits: [] };
-  w.hits = w.hits.filter((t) => now - t < 60_000);
-  if (w.hits.length >= OPENAI_RPM_PER_TENANT) {
-    windows.set(tenantId, w);
-    const oldest = w.hits[0];
-    return {
-      allowed: false,
-      remaining: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil((60_000 - (now - oldest)) / 1000)),
-    };
-  }
-  w.hits.push(now);
-  windows.set(tenantId, w);
-  return { allowed: true, remaining: Math.max(0, OPENAI_RPM_PER_TENANT - w.hits.length), retryAfterSeconds: 0 };
+/** Rate limit distribuido: consistente entre instancias serverless y reinicios. */
+async function checkTenantRateLimit(tenantId: string): Promise<RateVerdict> {
+  const verdict = await consumeRateLimit('openai', tenantId, OPENAI_RPM_PER_TENANT, 60);
+  return {
+    allowed: verdict.allowed,
+    remaining: verdict.allowed ? Math.max(0, OPENAI_RPM_PER_TENANT - 1) : 0,
+    retryAfterSeconds: verdict.retryAfter,
+  };
 }
 
 /** Librea el hueco de concurrencia (siempre en `finally`). */
@@ -261,7 +235,7 @@ export async function chatComplete(req: ChatRequest): Promise<ChatOutcome> {
 
   // Rate limit por empresa ANTES de gastar red ni tokens.
   if (req.tenantId) {
-    const verdict = checkTenantRateLimit(req.tenantId);
+    const verdict = await checkTenantRateLimit(req.tenantId);
     if (!verdict.allowed) {
       return {
         ...base,
@@ -376,6 +350,7 @@ export function openAiRuntime() {
   return {
     ...openAiStatus(),
     inFlight,
-    tenantsTracked: windows.size,
+    distributedRateLimit: true,
+    tenantsTracked: null,
   };
 }

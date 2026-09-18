@@ -519,74 +519,29 @@ async function grantAddon(
 ) {
   const { tenantId, items, paymentId, invoiceId, cycle, totalCents } = input;
 
-  // Idempotencia: un mismo pago nunca se concede dos veces.
-  const { data: existing } = await admin
-    .from('addons')
-    .select('id')
-    .or(`stripe_payment_id.eq.${paymentId}${invoiceId ? `,stripe_invoice_id.eq.${invoiceId}` : ''}`)
-    .limit(1);
-  if (existing && existing.length > 0) {
-    await systemLog('info', 'stripe.addon', 'Recarga ya aplicada (evento reintentado)', {
-      tenantId,
-      paymentId,
-    });
-    return;
-  }
-
   const totals = aggregateAddonItems(items);
   const unitCents = totalCents && totalCents > 0 && totals.units > 0 ? Math.round(totalCents / totals.units) : null;
-
-  for (const { pack, quantity } of items) {
-    const { error } = await admin.from('addons').insert({
-      tenant_id: tenantId,
-      type: pack.id,
-      pack: pack.id,
-      events: pack.metric === 'syncs' ? pack.amount * quantity : 0,
-      reviews: pack.metric === 'reviews' ? pack.amount * quantity : 0,
-      ai: pack.metric === 'ai' ? pack.amount * quantity : 0,
-      whatsapp: pack.metric === 'requests' ? pack.amount * quantity : 0,
-      quantity,
-      unit_amount_cents: unitCents,
-      cycle,
-      stripe_payment_id: paymentId,
-      stripe_invoice_id: invoiceId,
-    });
-    if (error) {
-      await systemLog('error', 'stripe.addon', `No se pudo registrar la recarga ${pack.id}: ${error.message}`, {
-        tenantId,
-      });
-    }
+  const rows = Array.from(new Map(items.map((item) => [item.pack.id, item])).values()).map(({ pack, quantity }) => ({
+    pack: pack.id,
+    events: pack.metric === 'syncs' ? pack.amount * quantity : 0,
+    reviews: pack.metric === 'reviews' ? pack.amount * quantity : 0,
+    ai: pack.metric === 'ai' ? pack.amount * quantity : 0,
+    whatsapp: pack.metric === 'requests' ? pack.amount * quantity : 0,
+    quantity,
+  }));
+  const { data: applied, error: grantError } = await admin.rpc('apply_addon_purchase', {
+    p_tenant_id: tenantId, p_payment_id: paymentId, p_invoice_id: invoiceId,
+    p_cycle: cycle, p_total_cents: unitCents, p_items: rows,
+    p_requests: totals.requests, p_reviews: totals.reviews, p_ai: totals.ai, p_syncs: totals.syncs,
+  });
+  if (grantError) throw new Error(`No se pudo aplicar la recarga: ${grantError.message}`);
+  if (!applied) {
+    await systemLog('info', 'stripe.addon', 'Recarga ya aplicada (evento reintentado)', { tenantId, paymentId });
+    return;
   }
-
-  const { data: tenant } = await admin
-    .from('tenants')
-    .select('extra_requests, extra_reviews, extra_ai, extra_syncs, extra_stored, extra_quota_cycle, owner_email, name')
-    .eq('id', tenantId)
-    .single();
-
-  const sameCycle = (tenant?.extra_quota_cycle ?? null) === cycle;
-  const base = sameCycle
-    ? {
-        requests: Number(tenant?.extra_requests ?? 0),
-        reviews: Number(tenant?.extra_reviews ?? 0),
-        ai: Number(tenant?.extra_ai ?? 0),
-        syncs: Number(tenant?.extra_syncs ?? 0),
-        stored: Number(tenant?.extra_stored ?? 0),
-      }
-    : { requests: 0, reviews: 0, ai: 0, syncs: 0, stored: 0 };
-
-  await admin
-    .from('tenants')
-    .update({
-      extra_requests: base.requests + totals.requests,
-      extra_reviews: base.reviews + totals.reviews,
-      extra_ai: base.ai + totals.ai,
-      extra_syncs: base.syncs + totals.syncs,
-      // Las opiniones extra también amplían el espacio en la base de datos.
-      extra_stored: base.stored + totals.reviews,
-      extra_quota_cycle: cycle,
-    })
-    .eq('id', tenantId);
+  const { data: tenant, error: tenantError } = await admin.from('tenants')
+    .select('owner_email, name').eq('id', tenantId).single();
+  if (tenantError) throw tenantError;
 
   const label = items.map((i) => `${i.pack.name}×${i.quantity}`).join(' + ');
   await systemLog('info', 'stripe.addon', `Recarga aplicada: ${label} · ciclo ${cycle}`, {

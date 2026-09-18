@@ -4,6 +4,7 @@ import { isTrialExpired, resolvePlan, type PlanId } from '@/lib/plans';
 import { checkQuota } from '@/lib/usage';
 import { enqueue } from '@/lib/queue';
 import { systemLog } from '@/lib/logger';
+import { decryptCredentials } from '@/lib/credentials';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -102,7 +103,7 @@ async function runCron(req: Request) {
 
     // Candidatos: Google (OAuth→Business, si no→Places), Trustpilot, TripAdvisor.
     const googleRow = rows.find((r) => r.provider === 'google');
-    const googleCreds = (googleRow?.credentials as any) ?? {};
+    const googleCreds = decryptCredentials<any>(googleRow?.credentials);
     const hasGoogleOAuth = Boolean(googleCreds.refresh_token ?? googleCreds.access_token);
     const candidates: Provider[] = [];
     if (hasGoogleOAuth) candidates.push('google');

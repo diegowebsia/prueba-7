@@ -1,5 +1,14 @@
 # Changelog — ReviewFlow AI
 
+
+## v3.11.0 (2026-09-18) — Endurecimiento integral de producción
+
+- Next.js 16.3.5, React 19.3, Supabase SSR actual, Node 24 en Docker y dependencias sin vulnerabilidades conocidas.
+- Esquema limpio corregido y migración `migration_3_11_0.sql`: estados Stripe, RLS, idempotencia, rate limiting y ledger multipack.
+- Flujo de valoración neutral: todas las puntuaciones reciben las mismas plataformas; soporte privado adicional.
+- OAuth Google con state firmado, TTL y PKCE; webhook Meta con HMAC, identidad y deduplicación.
+- Credenciales cifradas AES-256-GCM, redirects/HTML seguros, health mínimo/readiness privado y timeouts HTTP.
+- Security headers, Docker build args, ESLint flat config, tests y CI.
 ## v3.10.0 (2026-09-18) — TripAdvisor, automatización y Embudo Privado
 
 ### 🗺️ 1. Módulo de TripAdvisor (`lib/tripadvisor.ts`)

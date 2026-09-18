@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, demo: true, inspection });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

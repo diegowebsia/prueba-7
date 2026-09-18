@@ -57,6 +57,7 @@ export function ContactClient() {
   const [email, setEmail] = useState('');
   const [topic, setTopic] = useState('planes');
   const [message, setMessage] = useState('');
+  const [website, setWebsite] = useState('');
   const [sending, setSending] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -66,7 +67,7 @@ export function ContactClient() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message: `[${topic}] ${message}` }),
+        body: JSON.stringify({ name, email, message: `[${topic}] ${message}`, website }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Error enviando el mensaje.');
@@ -243,6 +244,11 @@ export function ContactClient() {
                 })}
               </div>
             </fieldset>
+
+            <div className="absolute -left-[9999px]" aria-hidden="true">
+              <label htmlFor="c-website">Website</label>
+              <input id="c-website" name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+            </div>
 
             <div>
               <label className="label" htmlFor="c-msg">

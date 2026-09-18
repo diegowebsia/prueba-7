@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from '@/lib/http';
+
 /**
  * Google Business Profile (reseñas reales de Google).
  * Flujo: OAuth (connect) → callback guarda tokens → sync importa reseñas.
@@ -21,7 +23,7 @@ function redirectUri(): string {
   return `${base}/api/integrations/google/callback`;
 }
 
-export function getGoogleOAuthUrl(tenantId: string): string {
+export function getGoogleOAuthUrl(state: string, codeChallenge: string): string {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID ?? '',
     redirect_uri: redirectUri(),
@@ -29,21 +31,24 @@ export function getGoogleOAuthUrl(tenantId: string): string {
     scope: SCOPE,
     access_type: 'offline',
     prompt: 'consent',
-    state: tenantId,
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
   });
   return `${AUTH_URL}?${params.toString()}`;
 }
 
-export async function exchangeGoogleCode(code: string): Promise<{
+export async function exchangeGoogleCode(code: string, codeVerifier: string): Promise<{
   access_token: string;
   refresh_token?: string;
   expires_in: number;
 }> {
-  const res = await fetch(TOKEN_URL, {
+  const res = await fetchWithTimeout(TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code,
+      code_verifier: codeVerifier,
       client_id: process.env.GOOGLE_CLIENT_ID ?? '',
       client_secret: process.env.GOOGLE_CLIENT_SECRET ?? '',
       redirect_uri: redirectUri(),
@@ -55,7 +60,7 @@ export async function exchangeGoogleCode(code: string): Promise<{
 }
 
 export async function refreshGoogleToken(refreshToken: string): Promise<string> {
-  const res = await fetch(TOKEN_URL, {
+  const res = await fetchWithTimeout(TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -86,16 +91,16 @@ export async function fetchGoogleReviews(accessToken: string): Promise<GoogleRev
   const headers = { Authorization: `Bearer ${accessToken}` };
   const out: GoogleReview[] = [];
 
-  const accRes = await fetch(`${GBP_API}/accounts`, { headers });
+  const accRes = await fetchWithTimeout(`${GBP_API}/accounts`, { headers });
   if (!accRes.ok) throw new Error(`Google accounts error (${accRes.status})`);
   const accounts: Array<{ name: string }> = (await accRes.json()).accounts ?? [];
 
   for (const acc of accounts) {
-    const locRes = await fetch(`${GBP_API}/${acc.name}/locations?readMask=name,title`, { headers });
+    const locRes = await fetchWithTimeout(`${GBP_API}/${acc.name}/locations?readMask=name,title`, { headers });
     if (!locRes.ok) continue;
     const locations: Array<{ name: string }> = (await locRes.json()).locations ?? [];
     for (const loc of locations) {
-      const revRes = await fetch(`https://mybusinessreviews.googleapis.com/v1/${loc.name}/reviews`, {
+      const revRes = await fetchWithTimeout(`https://mybusinessreviews.googleapis.com/v1/${loc.name}/reviews`, {
         headers,
       });
       if (!revRes.ok) continue;
@@ -121,7 +126,7 @@ export async function replyGoogleReview(
   externalId: string,
   replyText: string,
 ): Promise<void> {
-  const res = await fetch(`https://mybusinessreviews.googleapis.com/v1/${externalId}/reply`, {
+  const res = await fetchWithTimeout(`https://mybusinessreviews.googleapis.com/v1/${externalId}/reply`, {
     method: 'PUT',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ comment: replyText }),
@@ -168,7 +173,7 @@ export async function fetchPlaceReviews(placeId: string): Promise<PlacesSummary>
   const key = process.env.GOOGLE_PLACES_API_KEY;
   if (!key) throw new Error('Falta GOOGLE_PLACES_API_KEY en el servidor.');
 
-  const modern = await fetch(
+  const modern = await fetchWithTimeout(
     `${PLACES_API}/places/${encodeURIComponent(placeId)}` +
       `?fields=id,displayName,rating,userRatingCount,reviews,googleMapsUri`,
     { headers: { 'X-Goog-Api-Key': key, 'Content-Type': 'application/json' } },
@@ -194,7 +199,7 @@ export async function fetchPlaceReviews(placeId: string): Promise<PlacesSummary>
     };
   }
 
-  const legacy = await fetch(
+  const legacy = await fetchWithTimeout(
     `${LEGACY_PLACES_API}?place_id=${encodeURIComponent(placeId)}` +
       `&fields=name,rating,user_ratings_total,reviews&key=${encodeURIComponent(key)}`,
   );

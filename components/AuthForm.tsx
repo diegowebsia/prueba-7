@@ -21,7 +21,16 @@ export function AuthForm({ mode }: { mode: 'signin' | 'signup' }) {
   const router = useRouter();
   const params = useSearchParams();
   const toast = useToast();
-  const redirect = params.get('redirect') || '/dashboard';
+  const redirect = useMemo(() => {
+    const value = params.get('redirect');
+    if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return '/dashboard';
+    try {
+      const url = new URL(value, window.location.origin);
+      return url.origin === window.location.origin ? `${url.pathname}${url.search}${url.hash}` : '/dashboard';
+    } catch {
+      return '/dashboard';
+    }
+  }, [params]);
   const urlError = params.get('error');
   const reason = params.get('reason');
 

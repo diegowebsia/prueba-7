@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const jobId = new URL(req.url).searchParams.get('jobId') ?? '';
   if (!jobId) return NextResponse.json({ error: 'Falta jobId.' }, { status: 400 });
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
