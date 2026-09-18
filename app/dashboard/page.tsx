@@ -12,7 +12,7 @@ export const metadata = { title: 'Panel — ReviewFlow AI' };
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { tab?: string; addon?: string; pack?: string };
+  searchParams: { tab?: string; addon?: string; pack?: string; plan?: string };
 }) {
   const user = await getSessionUser();
   const tab =
@@ -35,7 +35,10 @@ export default async function DashboardPage({
   // panel completo (Bandeja, Empresa y Facturación) pueda previsualizarse con
   // `/dashboard?demo=1`. En cuanto existen claves reales, este bloque no aplica.
   if (!isSupabaseConfigured) {
-    const d = demoTenants[0];
+    const requestedPlan = searchParams.plan === 'business' ? 'business' : 'pro';
+    const d = demoTenants.find((tenant) => tenant.plan === requestedPlan && tenant.subscription_status === 'active')
+      ?? demoTenants[0];
+    reviews = demoReviews.filter((review) => review.tenant === d.name);
     tenants = [
       {
         id: d.id,
