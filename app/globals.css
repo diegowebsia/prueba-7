@@ -1,0 +1,567 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   ReviewFlow AI — Design System v3.5.0
+   Estética Linear/Vercel: fondo #090D16, vidrio fino, bordes
+   iluminados y micro-interacciones. Todo el producto (web pública,
+   auth, legales, panel y /admin) comparte estos tokens.
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* Superficies */
+  --bg: #090d16;
+  --bg-elevated: #0c111c;
+  --surface: rgba(255, 255, 255, 0.028);
+  --surface-strong: rgba(255, 255, 255, 0.055);
+  --surface-input: rgba(9, 13, 22, 0.72);
+
+  /* Bordes */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-glow: rgba(95, 146, 251, 0.45);
+
+  /* Texto */
+  --text: #eef1f8;
+  --text-muted: #a3adc2;
+  --text-dim: #6c7691;
+
+  /* Marca */
+  --brand: #3b76f0;
+  --brand-strong: #2563eb;
+  --brand-soft: #5f92fb;
+  --violet: #8b5cf6;
+
+  /* Tipografía (Inter/Geist si están instaladas; si no, system-ui) */
+  --font-sans: 'Inter', 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.875rem;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+
+/* Aurora ambiental fija: da profundidad sin distraer. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image:
+    radial-gradient(58% 42% at 18% 0%, rgba(37, 99, 235, 0.16) 0%, transparent 62%),
+    radial-gradient(48% 38% at 88% 8%, rgba(124, 58, 237, 0.13) 0%, transparent 60%),
+    radial-gradient(60% 40% at 50% 108%, rgba(52, 211, 153, 0.07) 0%, transparent 65%);
+}
+
+/* Grano fino (evita el «plano digital» de las plantillas). */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.32;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: rgba(59, 118, 240, 0.35);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-soft);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- Scrollbars ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+  background-clip: content-box;
+}
+
+/* ============================================================
+   Superficies: vidrio fino + borde iluminado
+   ============================================================ */
+
+@layer components {
+  .glass {
+    background-image: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.022) 42%,
+      rgba(255, 255, 255, 0.006) 100%
+    );
+    background-color: rgba(12, 17, 28, 0.55);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+      0 18px 45px -28px rgba(2, 6, 23, 0.95);
+  }
+
+  .card {
+    @apply relative rounded-[var(--radius-card)] p-5;
+    background-image: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.055) 0%,
+      rgba(255, 255, 255, 0.018) 45%,
+      rgba(255, 255, 255, 0.004) 100%
+    );
+    background-color: rgba(12, 17, 28, 0.6);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(12px) saturate(135%);
+    -webkit-backdrop-filter: blur(12px) saturate(135%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(2, 6, 23, 0.5),
+      0 20px 40px -30px rgba(2, 6, 23, 1);
+    transition:
+      border-color 0.35s ease,
+      box-shadow 0.35s ease,
+      transform 0.35s cubic-bezier(0.21, 0.6, 0.35, 1),
+      background-color 0.35s ease;
+  }
+
+  .card-hover:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+    background-color: rgba(16, 22, 37, 0.72);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
+      0 26px 60px -32px rgba(2, 6, 23, 1),
+      0 0 34px -22px rgba(59, 118, 240, 0.75);
+    transform: translateY(-2px);
+  }
+
+  /* Borde con brillo dinámico (Linear-style): se ilumina siguiendo al cursor. */
+  .glow-border {
+    position: relative;
+    isolation: isolate;
+  }
+  .glow-border::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      220px circle at var(--mx, 50%) var(--my, 0%),
+      rgba(95, 146, 251, 0.55),
+      rgba(139, 92, 246, 0.22) 42%,
+      transparent 72%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .glow-border:hover::after,
+  .glow-border:focus-within::after {
+    opacity: 1;
+  }
+
+  /* Borde degradado permanente (tarjeta destacada / plan Pro). */
+  .ring-gradient {
+    position: relative;
+  }
+  .ring-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(140deg, rgba(95, 146, 251, 0.85), rgba(139, 92, 246, 0.5) 45%, rgba(255, 255, 255, 0.08));
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .panel {
+    @apply rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4;
+  }
+
+  .divider {
+    @apply h-px w-full border-0 bg-gradient-to-r from-transparent via-white/12 to-transparent;
+  }
+
+  /* ---------- Botones ---------- */
+  .btn {
+    @apply relative inline-flex select-none items-center justify-center gap-2 rounded-[var(--radius-control)] px-4 py-2.5 text-sm font-semibold tracking-tightish;
+    transition:
+      transform 0.18s cubic-bezier(0.21, 0.6, 0.35, 1),
+      box-shadow 0.25s ease,
+      background-color 0.25s ease,
+      border-color 0.25s ease,
+      color 0.25s ease,
+      filter 0.25s ease;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px) scale(0.995);
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed opacity-55;
+  }
+
+  .btn-primary {
+    @apply btn text-white;
+    background-image: linear-gradient(120deg, #2563eb 0%, #3b76f0 48%, #7c3aed 100%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.22),
+      0 10px 28px -12px rgba(37, 99, 235, 0.85);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.09) saturate(1.05);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.28),
+      0 16px 38px -14px rgba(37, 99, 235, 0.95);
+  }
+
+  .btn-light {
+    @apply btn bg-white text-ink-950;
+    box-shadow: 0 10px 28px -14px rgba(255, 255, 255, 0.45);
+  }
+  .btn-light:hover:not(:disabled) {
+    @apply bg-ink-50;
+    box-shadow: 0 14px 34px -14px rgba(255, 255, 255, 0.5);
+  }
+
+  .btn-secondary,
+  .btn-ghost {
+    @apply btn border border-white/12 bg-white/[0.035] text-ink-100;
+  }
+  .btn-secondary:hover:not(:disabled),
+  .btn-ghost:hover:not(:disabled) {
+    @apply border-white/22 bg-white/[0.075] text-white;
+  }
+
+  .btn-quiet {
+    @apply btn text-ink-300 hover:bg-white/[0.06] hover:text-white;
+  }
+
+  .btn-danger {
+    @apply btn border border-rose-400/25 bg-rose-500/12 text-rose-100;
+  }
+  .btn-danger:hover:not(:disabled) {
+    @apply border-rose-400/45 bg-rose-500/20 text-white;
+  }
+
+  .btn-sm {
+    @apply rounded-xl px-3 py-1.5 text-xs;
+  }
+  .btn-lg {
+    @apply rounded-2xl px-6 py-3.5 text-[15px];
+  }
+
+  /* ---------- Formularios ---------- */
+  .input,
+  .textarea,
+  .select {
+    @apply w-full rounded-[var(--radius-control)] border border-white/12 px-3.5 py-2.5 text-sm text-white;
+    background-color: var(--surface-input);
+    box-shadow: inset 0 1px 2px rgba(2, 6, 23, 0.55);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .input::placeholder,
+  .textarea::placeholder {
+    @apply text-ink-400;
+  }
+  .input:hover,
+  .textarea:hover,
+  .select:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  .input:focus,
+  .textarea:focus,
+  .select:focus {
+    @apply outline-none;
+    border-color: var(--brand-soft);
+    box-shadow:
+      0 0 0 3px rgba(59, 118, 240, 0.18),
+      inset 0 1px 2px rgba(2, 6, 23, 0.4);
+  }
+  .select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A94AC' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.25rem;
+  }
+  .select option {
+    background-color: #0c111c;
+    color: #eef1f8;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink-200;
+  }
+  .hint {
+    @apply mt-1.5 text-xs text-ink-400;
+  }
+
+  .checkbox {
+    @apply h-4 w-4 rounded border-white/20 bg-ink-800 accent-[#3b76f0];
+  }
+
+  /* ---------- Insignias ---------- */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+  }
+  .badge-brand {
+    @apply badge text-brand-200;
+    background-color: rgba(59, 118, 240, 0.14);
+    border-color: rgba(95, 146, 251, 0.32);
+  }
+  .badge-ok {
+    @apply badge text-emerald-200;
+    background-color: rgba(52, 211, 153, 0.13);
+    border-color: rgba(52, 211, 153, 0.3);
+  }
+  .badge-warn {
+    @apply badge text-amber-200;
+    background-color: rgba(251, 191, 36, 0.13);
+    border-color: rgba(251, 191, 36, 0.3);
+  }
+  .badge-danger {
+    @apply badge text-rose-200;
+    background-color: rgba(251, 113, 133, 0.13);
+    border-color: rgba(251, 113, 133, 0.32);
+  }
+
+  .kicker {
+    @apply text-xs font-bold uppercase tracking-[0.18em] text-brand-300;
+  }
+
+  /* ---------- Navegación pegajosa ---------- */
+  .nav-blur {
+    background-color: rgba(9, 13, 22, 0.72);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* ---------- Utilidades de carga ---------- */
+  .skeleton {
+    @apply relative overflow-hidden rounded-xl;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.07) 45%,
+      rgba(255, 255, 255, 0.12) 55%,
+      transparent 100%
+    );
+    animation: shimmer 1.8s infinite;
+  }
+
+  /* ---------- Acordeón ---------- */
+  .accordion-item {
+    @apply overflow-hidden rounded-2xl border transition-colors duration-300;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.018);
+  }
+  .accordion-item[data-open='true'] {
+    border-color: rgba(95, 146, 251, 0.4);
+    background-color: rgba(255, 255, 255, 0.045);
+    box-shadow: 0 0 34px -24px rgba(59, 118, 240, 0.9);
+  }
+
+  /* ---------- Barra de progreso de cuota ---------- */
+  .meter {
+    @apply relative h-2 w-full overflow-hidden rounded-full;
+    background-color: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 2px rgba(2, 6, 23, 0.7);
+  }
+  .meter > span {
+    @apply block h-full rounded-full;
+    transition: width 0.7s cubic-bezier(0.21, 0.6, 0.35, 1);
+  }
+}
+
+/* ============================================================
+   Utilidades sueltas
+   ============================================================ */
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(100deg, #c2d6ff 0%, #5f92fb 38%, #a78bfa 72%, #f4f6fb 100%);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .tracking-tightish {
+    letter-spacing: -0.018em;
+  }
+
+  .mask-fade-b {
+    mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ---------- Landing: rejilla del hero ---------- */
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 75%);
+}
+
+/* ---------- Marquesina infinita de integraciones ---------- */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee {
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+.marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ---------- Prosa legal (dark, por defecto) ---------- */
+.legal-prose,
+.legal-prose-dark {
+  @apply text-[15px] leading-relaxed text-ink-200;
+}
+.legal-prose h2,
+.legal-prose-dark h2 {
+  @apply mb-2 mt-8 text-lg font-extrabold tracking-tightish text-white;
+}
+.legal-prose h2:first-child,
+.legal-prose-dark h2:first-child {
+  @apply mt-0;
+}
+.legal-prose h3,
+.legal-prose-dark h3 {
+  @apply mb-1.5 mt-5 text-base font-bold text-white;
+}
+.legal-prose p,
+.legal-prose-dark p {
+  @apply mb-3;
+}
+.legal-prose ul,
+.legal-prose-dark ul {
+  @apply mb-3 list-disc space-y-1.5 pl-5 marker:text-brand-300/70;
+}
+.legal-prose strong,
+.legal-prose-dark strong {
+  @apply font-semibold text-white;
+}
+.legal-prose a,
+.legal-prose-dark a {
+  @apply font-semibold text-brand-200 underline-offset-4 transition hover:text-white hover:underline;
+}
+.legal-prose table,
+.legal-prose-dark table {
+  @apply mb-4 w-full overflow-hidden rounded-xl border border-white/10 text-sm;
+}
+.legal-prose th,
+.legal-prose-dark th {
+  @apply bg-white/[0.06] px-3 py-2 text-left font-bold text-white;
+}
+.legal-prose td,
+.legal-prose-dark td {
+  @apply border-t border-white/[0.07] px-3 py-2 align-top text-ink-200;
+}
+.legal-prose code,
+.legal-prose-dark code {
+  @apply rounded-md bg-white/[0.08] px-1.5 py-0.5 font-mono text-[13px] text-ink-100;
+}
+.legal-prose em,
+.legal-prose-dark em {
+  @apply text-ink-300;
+}
+
+/* ---------- Accesibilidad: menos movimiento ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

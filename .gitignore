@@ -1,0 +1,30 @@
+# Deps
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Env (NUNCA subir claves reales)
+.env
+.env*.local
+!.env.example
+
+# OS / IDE
+.DS_Store
+*.pem
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Entregables generados (regenerables: zip del proyecto y parche acumulado)
+ReviewFlow-AI-*.zip
+ReviewFlow-AI-*.patch
+ReviewFlow-AI-*.bundle

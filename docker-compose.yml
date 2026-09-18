@@ -1,0 +1,50 @@
+# ============================================================
+# ReviewFlow AI v3.4.0 — Despliegue con 1 comando en CUALQUIER servidor
+# Uso:
+#   cp .env.example .env    # 1) pega tus claves reales
+#   docker compose up -d --build   # 2) lanzar
+#   docker compose logs -f app     # ver logs
+# ============================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: reviewflow-ai:3.4.0
+    container_name: reviewflow-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # --- (Opcional) Proxy inverso con HTTPS automático ---
+  # Si usas Coolify / Traefik / Nginx Proxy Manager, NO necesitas esto:
+  # apunta tu dominio al puerto 3000 del contenedor `app`.
+  # Ejemplo mínimo con Caddy descomentando este bloque y creando un Caddyfile:
+  #
+  # caddy:
+  #   image: caddy:2-alpine
+  #   container_name: reviewflow-caddy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile:ro
+  #     - caddy_data:/data
+  #   depends_on:
+  #     - app
+  #
+  # volumes:
+  #   caddy_data:
