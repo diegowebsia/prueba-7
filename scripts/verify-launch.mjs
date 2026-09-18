@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ============================================================
- * ReviewFlow AI — Verificación de lanzamiento (v3.11.0)
+ * ReviewFlow AI — Verificación de lanzamiento (v3.12.0)
  * ============================================================
  * Comprueba, contra tu propia app desplegada, que lo comercial está listo
  * ANTES de vender. No necesita claves de Stripe: usa el `whsec_` de tu .env

@@ -1,4 +1,4 @@
-# 💰 GUIA_COMERCIALIZACION — Todo lo que TIENES QUE PONER TÚ para vender al público (v3.11.0)
+# 💰 GUIA_COMERCIALIZACION — Todo lo que TIENES QUE PONER TÚ para vender al público (v3.12.0)
 
 El código está 100 % programado: planes de pago con prueba de 7 días, cobros, cuotas,
 panel, integraciones y textos legales base. **Esta guía lista, bloque por bloque, todo lo
@@ -346,7 +346,7 @@ Hazlo en este orden. **No abras el registro público con ninguna casilla en rojo
 - [ ] `npm run typecheck` → 0 errores · `npm run build` → ✓ Compiled successfully.
 - [ ] `npm run verify -- --url https://tudominio.com` → todo verde (health, IA, pool PG,
   precios Stripe, firma del webhook válida→2xx / falsa→400, rutas de IA sin sesión→401).
-- [ ] `GET /api/health?mode=ready` → `version: "3.11.0"` y en verde todo lo que configuraste.
+- [ ] `GET /api/health?mode=ready` con Bearer `HEALTHCHECK_SECRET` → `configuration` y `database` en `true`.
 - [ ] `GET /api/stripe/webhook` (super-admin) → modo `live`, eventos y precios detectados.
 - [ ] `/admin` sin banner de demo; pestaña *Sistema* con planes, recargas e integraciones en «listo».
 

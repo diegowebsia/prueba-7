@@ -30,6 +30,18 @@ export async function requireSuperAdmin(): Promise<AdminGuard> {
   return { ok: true, userId: user.id, email: user.email ?? '' };
 }
 
+/** Operaciones de alto impacto: super-admin más sesión MFA AAL2. */
+export async function requireSuperAdminMfa(): Promise<AdminGuard> {
+  const guard = await requireSuperAdmin();
+  if (!guard.ok) return guard;
+  const supabase = await createClient();
+  const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (data?.currentLevel !== 'aal2') {
+    return { ok: false, status: 403, error: 'Esta operación exige MFA reciente (AAL2).' };
+  }
+  return guard;
+}
+
 /** Sesión normal para /dashboard. */
 export async function getSessionUser() {
   if (!isSupabaseConfigured) return null;

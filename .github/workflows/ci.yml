@@ -8,6 +8,20 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: reviewflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d reviewflow_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/reviewflow_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,4 +33,19 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - name: Validate clean schema and migrations in PostgreSQL
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          create schema auth;
+          create role anon nologin;
+          create role authenticated nologin;
+          create role service_role nologin;
+          create table auth.users(id uuid primary key);
+          create function auth.uid() returns uuid language sql stable as $$
+            select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
+          $$;
+          SQL
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/schema.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migration_3_11_0.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migration_3_12_0.sql
       - run: npm run build

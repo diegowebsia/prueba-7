@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * ReviewFlow AI — Catálogo comercial de planes (v3.11.0)
+ * ReviewFlow AI — Catálogo comercial de planes (v3.12.0)
  * ============================================================
  * 100% client-safe: este fichero NO importa nada de Node ni de Supabase,
  * por lo que puede usarse en la landing, el dashboard y el servidor.

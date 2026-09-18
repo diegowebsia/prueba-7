@@ -5,6 +5,7 @@ import { checkQuota, consume, enforce, enforceTableCap, publicQuota } from '@/li
 import { negativeReviewAlert } from '@/lib/whatsapp';
 import { enqueue } from '@/lib/queue';
 import { systemLog } from '@/lib/logger';
+import { payloadErrorResponse, readJsonLimited } from '@/lib/request';
 
 const Body = z.object({
   api_key: z.string().min(10),
@@ -31,7 +32,11 @@ const Body = z.object({
  * Consumo: 1 unidad `reviews_ingested` (+1 `whatsapp_sent` si salta alerta).
  */
 export async function POST(req: Request) {
-  const parsed = Body.safeParse(await req.json().catch(() => ({})));
+  let rawBody: unknown;
+  try { rawBody = await readJsonLimited(req, 262144); } catch (error) {
+    return payloadErrorResponse(error) ?? NextResponse.json({ error: 'JSON inválido.' }, { status: 400 });
+  }
+  const parsed = Body.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json({ error: 'Parámetros inválidos.', issues: parsed.error.issues }, { status: 400 });
   }

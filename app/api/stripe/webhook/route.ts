@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { systemLog } from '@/lib/logger';
 import { sendMail } from '@/lib/mail';
 import { requireSuperAdmin } from '@/lib/auth';
+import { payloadErrorResponse, readTextLimited } from '@/lib/request';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,14 +93,26 @@ export async function POST(req: Request) {
   const sig = req.headers.get('stripe-signature');
   if (!sig) return NextResponse.json({ error: 'Sin firma.' }, { status: 400 });
 
+  let rawBody: string;
+  try { rawBody = await readTextLimited(req, 1024 * 1024); } catch (error) {
+    return payloadErrorResponse(error) ?? NextResponse.json({ error: 'Cuerpo inválido.' }, { status: 400 });
+  }
   let event: Stripe.Event;
   try {
-    const rawBody = await req.text();
     event = stripe.webhooks.constructEvent(rawBody, sig, env.stripeWebhookSecret);
-  } catch (err: any) {
-    await systemLog('error', 'stripe.webhook', `Firma inválida: ${err?.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'firma inválida';
+    await systemLog('error', 'stripe.webhook', `Firma inválida: ${message}`);
     return NextResponse.json({ error: 'Firma inválida.' }, { status: 400 });
   }
+
+  const admin = createAdminClient();
+  if (!admin) return NextResponse.json({ error: 'Base de datos no configurada.' }, { status: 503 });
+  const { data: claimed, error: claimError } = await admin.rpc('claim_webhook_event', {
+    p_provider: 'stripe', p_event_id: event.id, p_event_type: event.type,
+  });
+  if (claimError) return NextResponse.json({ error: 'No se pudo reclamar el evento.' }, { status: 503 });
+  if (!claimed) return NextResponse.json({ received: true, duplicate: true });
 
   await systemLog('info', 'stripe.webhook', `Evento recibido: ${event.type}`, { id: event.id });
 
@@ -135,11 +148,17 @@ export async function POST(req: Request) {
       default:
         break;
     }
-  } catch (err: any) {
-    await systemLog('error', 'stripe.webhook', `Error procesando ${event.type}: ${err?.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'error desconocido';
+    await admin.rpc('fail_webhook_event', { p_provider: 'stripe', p_event_id: event.id, p_error: message });
+    await systemLog('error', 'stripe.webhook', `Error procesando ${event.type}: ${message}`);
     return NextResponse.json({ error: 'Error interno procesando el evento.' }, { status: 500 });
   }
 
+  const { error: finishError } = await admin.rpc('finish_webhook_event', {
+    p_provider: 'stripe', p_event_id: event.id,
+  });
+  if (finishError) return NextResponse.json({ error: 'Evento procesado pero no finalizado.' }, { status: 500 });
   return NextResponse.json({ received: true });
 }
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { verifyOpaqueId } from '@/lib/security';
+import { payloadErrorResponse, readJsonLimited } from '@/lib/request';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,11 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
-  const parsed = Body.safeParse(await req.json().catch(() => ({})));
+  let rawBody: unknown;
+  try { rawBody = await readJsonLimited(req, 4096); } catch (error) {
+    return payloadErrorResponse(error) ?? NextResponse.json({ error: 'JSON inválido.' }, { status: 400 });
+  }
+  const parsed = Body.safeParse(rawBody);
   if (!parsed.success) return NextResponse.json({ error: 'Parámetros inválidos.' }, { status: 400 });
 
   if (!verifyOpaqueId(parsed.data.responseId, parsed.data.clickToken)) {

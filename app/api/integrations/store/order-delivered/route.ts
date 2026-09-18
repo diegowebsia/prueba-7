@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { tenantByApiKey } from '@/lib/store';
 import { enqueue } from '@/lib/queue';
+import { payloadErrorResponse, readJsonLimited } from '@/lib/request';
 
 const Body = z.object({
   api_key: z.string().min(10),
@@ -21,7 +22,11 @@ const Body = z.object({
  * El pedido se ENCOLA y se responde al instante; el worker lo procesa.
  */
 export async function POST(req: Request) {
-  const parsed = Body.safeParse(await req.json().catch(() => ({})));
+  let rawBody: unknown;
+  try { rawBody = await readJsonLimited(req, 32768); } catch (error) {
+    return payloadErrorResponse(error) ?? NextResponse.json({ error: 'JSON inválido.' }, { status: 400 });
+  }
+  const parsed = Body.safeParse(rawBody);
   if (!parsed.success) return NextResponse.json({ error: 'Parámetros inválidos.' }, { status: 400 });
 
   const admin = createAdminClient();

@@ -1,4 +1,4 @@
-# 🛡️ GUIA_ADMIN.md — Manual del dueño (ReviewFlow AI v3.11.0)
+# 🛡️ GUIA_ADMIN.md — Manual del dueño (ReviewFlow AI v3.12.0)
 
 Todo lo que necesitas para **operar tu SaaS día a día**: planes, cobros, cuotas,
 protección de la base de datos, soporte y mantenimiento. Cero código.
@@ -72,7 +72,7 @@ consumo de **tokens de IA** y el coste estimado del ciclo, y en el diagnóstico
 interno tienes `GET /api/admin/db` (latencia, conexiones, tamaño por tabla) y
 `GET /api/ai` (estado del motor de IA).
 
-Extra de v3.11.0: sincronizaciones **automáticas por cron** (Business cada hora, Pro cada
+Extra de v3.12.0: sincronizaciones **automáticas por cron** (Business cada hora, Pro cada
 6 h; de noche no tocas nada), trabajos en **cola QStash** con reintentos (o en línea si no
 la configuras), **opt-ins de WhatsApp** por cliente (RGPD), pestaña **Embudo** con tickets
 1-3★ y avisos al dueño, e IA **asíncrona** (`GET /api/ai/result?jobId=`). Todo deja rastro

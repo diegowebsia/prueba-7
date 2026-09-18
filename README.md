@@ -1,4 +1,4 @@
-# ⭐ ReviewFlow AI v3.11.0
+# ⭐ ReviewFlow AI v3.12.0
 
 **Plataforma SaaS multi-tenant para centralizar opiniones reales (Google · Trustpilot · Tiendas),
 responderlas con IA, pedirlas por email/WhatsApp y cobrar por uso medible.**
@@ -212,7 +212,8 @@ Registro → /bienvenido (2 planes de pago)
 | `/valorar/[slug]` + `/api/feedback/*` | Flujo Neutral 1-5★: plataformas públicas para todas las puntuaciones (clic medido) y soporte privado opcional. |
 | `supabase/migration_3_10_0.sql` | Fuente `tripadvisor` (+fix `places`), proveedor `tripadvisor`, `ai_interactions.job_id`, tablas `whatsapp_optins`, `whatsapp_contacts`, `feedback_responses` + RLS. |
 | `supabase/migration_3_11_0.sql` | Estados Stripe, idempotencia, rate limits, ledger multipack, auditoría inmutable y hardening RLS. |
-| `middleware.ts` | Corta `/dashboard` sin acceso (→ `/bienvenido?reason=`), `/admin` sin `SUPERADMIN_EMAILS` y las APIs `/api/ai|reviews|integrations` sin suscripción (**402**). |
+| `supabase/migration_3_12_0.sql` | Idempotencia observable de webhooks Stripe y soporte de reintentos seguros. |
+| `proxy.ts` | Añade trazabilidad, corta `/dashboard` sin acceso, `/admin` sin `SUPERADMIN_EMAILS` y las APIs `/api/ai|reviews|integrations` sin suscripción (**402**). |
 
 ### Endpoints con control de cuota
 
@@ -231,12 +232,14 @@ Registro → /bienvenido (2 planes de pago)
 | `GET /api/tenants/usage` | — | Snapshot de cuota + tokens de IA + topes para el panel |
 | `GET /api/health?mode=live` | — | Liveness público mínimo |
 | `GET /api/health?mode=ready` | Bearer `HEALTHCHECK_SECRET` | Readiness privado de configuración y BD |
+| `GET /api/tenants/export` | Sesión + membresía | Exportación CSV segura de reseñas o feedback |
+| `GET /api/reports/reputation` | Sesión + membresía | Informe de reputación de 30 días |
 | `GET /api/admin/db` | — | Diagnóstico de BD: pool, latencia, conexiones, tamaño por tabla (super-admin) |
 | `GET /api/stripe/webhook` | — | Diagnóstico del webhook: modo, eventos, precios (super-admin) |
 
 ---
 
-## 🎨 Sistema de diseño v3.11.0
+## 🎨 Sistema de diseño v3.12.0
 
 - **Fondo** `#090D16` (`ink-950`) con escala propia `ink-50…950`, acento `brand` (azul #2563eb →
   #5f92fb) y violeta de apoyo; nunca negro puro ni blanco puro.
@@ -304,7 +307,7 @@ Registro → /bienvenido (2 planes de pago)
 ├── lib/                 plans · usage · openai · db · ingest · stripe · ai · google ·
 │                        trustpilot · whatsapp · store · maps · mail · auth · env · logger ·
 │                        demo · site
-├── supabase/            schema.sql + migration_3_2_0 … migration_3_11_0.sql
+├── supabase/            schema.sql + migration_3_2_0 … migration_3_12_0.sql
 ├── scripts/             verify-launch.mjs (npm run verify)
 ├── docs/                GUIA_PASOS_MANUALES.md (manual de credenciales, fuera del cliente)
 ├── public/              logo.svg · favicon.svg

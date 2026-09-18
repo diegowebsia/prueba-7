@@ -54,3 +54,12 @@ test('validación de producción exige secretos y HTTPS', async () => {
   assert.ok(errors.includes('Falta SUPABASE_SERVICE_ROLE_KEY'));
   assert.ok(errors.some((error) => error.includes('HTTPS')));
 });
+
+test('clave anterior permite descifrar y recifrar credenciales', () => {
+  process.env.INTEGRATION_ENCRYPTION_KEY = 'old-key';
+  const old = encryptCredentials({ token: 'legacy-secret' });
+  process.env.INTEGRATION_ENCRYPTION_KEY = 'new-key';
+  process.env.INTEGRATION_ENCRYPTION_KEY_PREVIOUS = 'old-key';
+  assert.deepEqual(decryptCredentials(old), { token: 'legacy-secret' });
+  delete process.env.INTEGRATION_ENCRYPTION_KEY_PREVIOUS;
+});

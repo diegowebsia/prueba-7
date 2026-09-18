@@ -1,6 +1,14 @@
 # Changelog — ReviewFlow AI
 
 
+
+## v3.12.0 (2026-09-18) — Robustez y nuevos servicios
+
+- Idempotencia observable de todos los eventos Stripe, con estado, intentos y reintento seguro.
+- Límite real de bytes en formularios y webhooks públicos; replay de tickets cerrado con estado y TTL.
+- Exportación CSV segura de reseñas/feedback e informe de reputación de 30 días.
+- Recifrado administrado y auditable de credenciales, con soporte temporal de clave anterior.
+- Request ID para APIs, limpieza automática en cron y validación SQL real con PostgreSQL en CI.
 ## v3.11.0 (2026-09-18) — Endurecimiento integral de producción
 
 - Next.js 16.3.5, React 19.3, Supabase SSR actual, Node 24 en Docker y dependencias sin vulnerabilidades conocidas.

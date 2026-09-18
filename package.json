@@ -1,7 +1,7 @@
 {
   "name": "reviewflow-ai",
-  "version": "3.11.0",
-  "description": "ReviewFlow AI v3.11.0 — SaaS multi-tenant de gestión y respuesta de opiniones con IA (gpt-4o-mini). 100% de pago, TripAdvisor, cron + cola QStash, plantillas WhatsApp HSM, opt-in RGPD y flujo neutral de valoración.",
+  "version": "3.12.0",
+  "description": "ReviewFlow AI v3.12.0 — SaaS multi-tenant de gestión y respuesta de opiniones con IA (gpt-4o-mini). 100% de pago, TripAdvisor, cron + cola QStash, plantillas WhatsApp HSM, opt-in RGPD y flujo neutral de valoración.",
   "private": true,
   "license": "UNLICENSED",
   "engines": {

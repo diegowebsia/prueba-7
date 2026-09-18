@@ -65,6 +65,11 @@ async function runCron(req: Request) {
   const admin = createAdminClient();
   if (!admin) return NextResponse.json({ error: 'Supabase no configurado.' }, { status: 503 });
 
+  const { error: cleanupError } = await admin.rpc('cleanup_security_data');
+  if (cleanupError) {
+    await systemLog('warn', 'cron.cleanup', 'Limpieza de seguridad no disponible', { code: cleanupError.code });
+  }
+
   const { data: tenants } = await admin
     .from('tenants')
     .select('id, name, plan, subscription_status, suspended, trial_ends_at, settings')

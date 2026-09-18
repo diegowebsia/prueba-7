@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
   Copy,
+  Download,
   ExternalLink,
   Filter,
   Loader2,
@@ -134,6 +135,20 @@ export function FunnelPanel({ tenant: t, demo }: { tenant: TenantInfo; demo: boo
           </a>
         </div>
       </div>
+
+      {!demo && (
+        <div className="flex flex-wrap gap-2" aria-label="Exportación de datos">
+          <a href={`/api/tenants/export?tenantId=${encodeURIComponent(t.id)}&dataset=reviews`} className="btn-secondary btn-sm">
+            <Download size={13} /> Exportar reseñas CSV
+          </a>
+          <a href={`/api/tenants/export?tenantId=${encodeURIComponent(t.id)}&dataset=feedback`} className="btn-secondary btn-sm">
+            <Download size={13} /> Exportar feedback CSV
+          </a>
+          <a href={`/api/reports/reputation?tenantId=${encodeURIComponent(t.id)}`} target="_blank" rel="noopener" className="btn-quiet btn-sm">
+            <ExternalLink size={13} /> Informe de reputación
+          </a>
+        </div>
+      )}
 
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-ink-400">

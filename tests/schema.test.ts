@@ -13,3 +13,11 @@ test('schema contempla estados runtime y hardening crítico', () => {
   assert.equal(sql.includes('create policy "tenants_insert_auth"'), false);
   assert.match(sql, /stripe_payment_id, pack/);
 });
+
+
+test('schema 3.12 aporta idempotencia observable de webhooks', () => {
+  const sql = readFileSync('supabase/schema.sql', 'utf8');
+  for (const value of ['webhook_events', 'claim_webhook_event', 'finish_webhook_event', 'fail_webhook_event']) {
+    assert.ok(sql.includes(value));
+  }
+});

@@ -4,6 +4,7 @@ import { recordWhatsappInbound } from '@/lib/whatsapp';
 import { isOptoutMessage, normalizePhone } from '@/lib/optin';
 import { systemLog } from '@/lib/logger';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { payloadErrorResponse, readTextLimited } from '@/lib/request';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,10 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const secret = process.env.WHATSAPP_APP_SECRET;
   if (!secret) return NextResponse.json({ error: 'Webhook no configurado.' }, { status: 503 });
-  const raw = await req.text();
+  let raw: string;
+  try { raw = await readTextLimited(req, 1048576); } catch (error) {
+    return payloadErrorResponse(error) ?? NextResponse.json({ error: 'Cuerpo inválido.' }, { status: 400 });
+  }
   const supplied = req.headers.get('x-hub-signature-256') ?? '';
   const expected = `sha256=${createHmac('sha256', secret).update(raw).digest('hex')}`;
   const a = Buffer.from(supplied);

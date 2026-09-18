@@ -4,10 +4,10 @@ import { createServerClient } from '@supabase/ssr';
 import { isTrialExpired, TRIAL_DAYS } from '@/lib/plans';
 
 /**
- * ReviewFlow AI v3.11.0 — Middleware de seguridad y negocio (modelo 100% de pago).
+ * ReviewFlow AI v3.12.0 — Middleware de seguridad y negocio (modelo 100% de pago).
  *
- * Nota v3.11.0: `/api/cron/*`, `/api/queue/*` y `/api/feedback/*` quedan FUERA del
- * matcher a propósito y se protegen internamente (CRON_SECRET, firma QStash,
+ * Nota v3.12.0: `/api/cron/*`, `/api/queue/*` y `/api/feedback/*` pasan por
+ * Proxy solo para trazabilidad, pero se protegen internamente (CRON_SECRET, firma QStash,
  * membresía o rate-limit según el caso).
  *
  * - `/admin/*`: solo SUPERADMIN_EMAILS (verificación 1 de 2). Es un panel
@@ -33,6 +33,11 @@ import { isTrialExpired, TRIAL_DAYS } from '@/lib/plans';
  */
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const requestId = crypto.randomUUID();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-request-id', requestId);
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  res.headers.set('x-request-id', requestId);
 
   const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
   const isDashboardRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/');
@@ -48,11 +53,7 @@ export async function proxy(req: NextRequest) {
       pathname === '/api/integrations' ||
       pathname.startsWith('/api/integrations/'));
 
-  if (!isAdminRoute && !isDashboardRoute && !isProtectedApi) {
-    return NextResponse.next();
-  }
-
-  const res = NextResponse.next();
+  if (!isAdminRoute && !isDashboardRoute && !isProtectedApi) return res;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -272,14 +273,5 @@ async function checkSubscriptionAccess(
 }
 
 export const config = {
-  matcher: [
-    '/admin/:path*',
-    '/dashboard/:path*',
-    '/api/ai/:path*',
-    '/api/ai',
-    '/api/reviews/:path*',
-    '/api/reviews',
-    '/api/integrations/:path*',
-    '/api/integrations',
-  ],
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/api/:path*'],
 };

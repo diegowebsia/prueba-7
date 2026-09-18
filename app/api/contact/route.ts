@@ -5,6 +5,7 @@ import { env } from '@/lib/env';
 import { systemLog } from '@/lib/logger';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { escapeHtml, hashPersonalValue, requestIp } from '@/lib/security';
+import { payloadErrorResponse, readJsonLimited } from '@/lib/request';
 
 const Body = z.object({
   name: z.string().min(2).max(100),
@@ -17,7 +18,11 @@ const Body = z.object({
 export async function POST(req: Request) {
   const rate = await consumeRateLimit('contact', requestIp(req), 5, 3600);
   if (!rate.allowed) return NextResponse.json({ error: 'Demasiados intentos.' }, { status: 429, headers: { 'Retry-After': String(rate.retryAfter) } });
-  const parsed = Body.safeParse(await req.json().catch(() => ({})));
+  let rawBody: unknown;
+  try { rawBody = await readJsonLimited(req, 16384); } catch (error) {
+    return payloadErrorResponse(error) ?? NextResponse.json({ error: 'JSON inválido.' }, { status: 400 });
+  }
+  const parsed = Body.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json({ error: 'Revisa los campos (nombre, email válido, mensaje 10+ caracteres).' }, { status: 400 });
   }

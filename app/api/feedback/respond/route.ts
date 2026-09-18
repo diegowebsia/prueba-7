@@ -8,6 +8,7 @@ import { whatsappTemplateLang, whatsappTemplateName } from '@/lib/whatsapp';
 import { systemLog } from '@/lib/logger';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { escapeHtml, hashPersonalValue, requestIp, signOpaqueId, verifyOpaqueId } from '@/lib/security';
+import { payloadErrorResponse, readJsonLimited } from '@/lib/request';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,11 @@ const Body = z.object({
 
 
 export async function POST(req: Request) {
-  const parsed = Body.safeParse(await req.json().catch(() => ({})));
+  let rawBody: unknown;
+  try { rawBody = await readJsonLimited(req, 16384); } catch (error) {
+    return payloadErrorResponse(error) ?? NextResponse.json({ error: 'JSON inválido.' }, { status: 400 });
+  }
+  const parsed = Body.safeParse(rawBody);
   if (!parsed.success) return NextResponse.json({ error: 'Parámetros inválidos.' }, { status: 400 });
   const input = parsed.data;
 
@@ -86,7 +91,7 @@ export async function POST(req: Request) {
     ip_hash: ipHash, user_agent: userAgent,
   };
   const query = existingId
-    ? admin.from('feedback_responses').update(values).eq('id', existingId).eq('tenant_id', tenant.id).select('id').single()
+    ? admin.from('feedback_responses').update(values).eq('id', existingId).eq('tenant_id', tenant.id).eq('kind', 'redirect').gte('created_at', new Date(Date.now() - 60 * 60_000).toISOString()).select('id').single()
     : admin.from('feedback_responses').insert(values).select('id').single();
   const { data: row, error } = await query;
   if (error || !row) return NextResponse.json({ error: 'No se pudo registrar tu valoración.' }, { status: 500 });

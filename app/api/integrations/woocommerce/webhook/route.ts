@@ -4,6 +4,7 @@ import { verifyWooHmac } from '@/lib/store';
 import { enqueue } from '@/lib/queue';
 import { systemLog } from '@/lib/logger';
 import { decryptCredentials } from '@/lib/credentials';
+import { payloadErrorResponse, readTextLimited } from '@/lib/request';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,10 @@ export async function POST(req: Request) {
     .single();
   const secret = decryptCredentials<{ webhook_secret?: string }>(integ?.credentials).webhook_secret;
 
-  const raw = await req.text();
+  let raw: string;
+  try { raw = await readTextLimited(req, 1048576); } catch (error) {
+    return payloadErrorResponse(error) ?? NextResponse.json({ error: 'Cuerpo inválido.' }, { status: 400 });
+  }
   if (!verifyWooHmac(raw, secret ?? '', req.headers.get('x-wc-webhook-signature'))) {
     await systemLog('warn', 'store.webhook', 'Firma WooCommerce inválida', { tenantId: tenant.id });
     return NextResponse.json({ error: 'Firma inválida.' }, { status: 401 });
